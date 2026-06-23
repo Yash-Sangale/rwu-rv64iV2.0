@@ -1,0 +1,5 @@
+TEST_NAME=tb_ins_decoder
+PASS=28
+FAIL=0
+TOTAL=28
+STATUS=PASS

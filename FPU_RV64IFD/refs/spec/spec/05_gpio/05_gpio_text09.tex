@@ -1,0 +1,7 @@
+As common for asSlaveBPI peripherals there are also two main states of the GPIO’s kernel.
+
+Before it can actually start operation, it has to be configured. This configuration state is left by setting bit RUN in register RUN\_CTRL. Thereby the configuration registers are locked for write accesses, the functional blocks of peripheral kernel and asSlaveBPI block are reset (e.g. the FIFOs are flushed) and working state is entered. The different functional blocks of the GPIO peripheral kernel start operating as described in the following.
+
+Figure \ref{fig:asgpio02} shows the principal functionality of the GPIO kernel. The shown registers are part of the SFR block of the peripheral. When there is a '1' written to the direction register, the pad acts as an input and the captured value will be written to the data register. When there is a '0' written to the direction register, the pad acts as an output and the value from the data register will be written to the pad. The data register is rw from the bus side. 
+
+In case of an input setting, a signal change will be detected and written to the IRQ register inside the SRB.

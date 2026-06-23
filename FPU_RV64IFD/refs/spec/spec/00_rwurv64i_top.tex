@@ -1,0 +1,176 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Englisch
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass[a4paper,12pt]{book}
+\usepackage[english]{babel}
+\selectlanguage{english}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Deutsch
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\documentclass[a4paper,12pt]{book} 
+%\usepackage[german,ngerman]{babel} %Chapter -> Kapitel
+%\usepackage[T1]{fontenc}           %Umlaute
+%\selectlanguage{ngerman}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Pfade %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\newcommand{\ASROOT}{/media/andreas/arbeit/neuestruktur/hs_vorlesungen/}
+%\newcommand{\UMGEBUNG}{\ASROOT latex/}
+\newcommand{\UMGEBUNG}{./}
+\newcommand{\BILDERa}{./}
+\newcommand{\TEXTa}{./}
+\newcommand{\TEXTprod}{./02_prod/}
+\newcommand{\TEXTarch}{./03_arch/}
+\newcommand{\TEXTalu}{./04_alu/}
+\newcommand{\TEXTdec}{./04_dec/}
+\newcommand{\TEXTgpio}{./05_gpio/}
+\newcommand{\TEXTimem}{./05_imem/}
+\newcommand{\TEXTqspi}{./05_qspi/}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Umgebung 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{\UMGEBUNG latex_all_asheader_en}
+\input{\UMGEBUNG latex_all_makros}
+
+\setcounter{tocdepth}{2}    % How many levels will be seen in ToC.
+\setcounter{secnumdepth}{2} % How many levels will have a number.
+%\usepackage[colorhead=true]{rwukoma}
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+ % Literatur: biber
+ %%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage[backend=biber,
+                     style=ieee,
+                     natbib=true,
+                     hyperref=true,
+                     maxnames=4]{biblatex}
+\addbibresource{./as_literature.bib} %% Einbinden der bib-Datei
+\DeclareBibliographyCategory{cited}
+\AtEveryCitekey{\addtocategory{cited}{\thefield{entrykey}}}
+
+% Block names
+\newcommand{\asrvi}{\textbf{RV64I}\,}
+\newcommand{\aschip}{\textbf{RWU-RV64I}\,}
+\newcommand{\asimem}{\textbf{I-Mem0}\,}
+\newcommand{\asimemg}{\textbf{I-Mem}\,}
+
+% Pin names, signal names
+\newcommand{\asgpioPinInt}{gpio\_io\,}
+\newcommand{\asgpioPinExt}{gpio\_io\,}
+\newcommand{\asgpioIRQ}{GPIO\_INT\,}
+\newcommand{\asimemAddrPinInt}{addr\_i\,}
+\newcommand{\asimemAddrPinExt}{iBusAddr2\_s\,}
+\newcommand{\asimemDatoPinInt}{data\_o\,}
+\newcommand{\asimemDatoPinExt}{iBusDataRd\_s\,}
+\newcommand{\asimemDatiPinInt}{data\_i\,}
+\newcommand{\asimemDatiPinExt}{iBusDataWr\_s\,}
+\newcommand{\asimemWePinInt}{wr\_i\,}
+\newcommand{\asimemWePinExt}{iMemWr\_s\,}
+\newcommand{\asqspiSCK}{qspiSck\_o\,}
+\newcommand{\asqspiCS}{qspiCs\_o\,}
+\newcommand{\asqspiData}{qspi\_data\_io\,}
+
+% Registers
+% GPIO
+\newcommand{\asgpioDirRegInt}{dir\_reg\_s }
+\newcommand{\asgpioDirRegExt}{\textbf{GPIO0\_DIR}\,}
+\newcommand{\asgpioDatRegInt}{data\_reg\_s\,}
+\newcommand{\asgpioDatRegExt}{\textbf{GPIO0\_DATA}\,}
+\newcommand{\asgpioIRQSSRegInt}{irqss\_reg\_s\,}
+\newcommand{\asgpioIRQSSRegExt}{\textbf{GPIO0\_IRQSS}\,}
+\newcommand{\asgpioIRQSCRegInt}{irqsc\_reg\_s\,}
+\newcommand{\asgpioIRQSCRegExt}{\textbf{GPIO0\_IRQSC}\,}
+\newcommand{\asgpioIRQSMRegInt}{irqsm\_reg\_s\,}
+\newcommand{\asgpioIRQSMRegExt}{\textbf{GPIO0\_IRQSM}\,}
+\newcommand{\asgpioRISRegInt}{ris\_reg\_s\,}
+\newcommand{\asgpioRISRegExt}{\textbf{GPIO0\_RIS}\,}
+\newcommand{\asgpioISRRegInt}{isr\_reg\_s\,}
+\newcommand{\asgpioISRRegExt}{\textbf{GPIO0\_ISR}\,}
+\newcommand{\asgpioIMSCRegInt}{imsc\_reg\_s\,}
+\newcommand{\asgpioIMSCRegExt}{\textbf{GPIO0\_IMSC}\,}
+\newcommand{\asgpioMISRegInt}{mis\_reg\_s\,}
+\newcommand{\asgpioMISRegExt}{\textbf{GPIO0\_MIS}\,}
+\newcommand{\asgpioIDRegInt}{id\_reg\_s\,}
+\newcommand{\asgpioIDRegExt}{\textbf{GPIO0\_ID}\,}
+
+% QSPI
+\newcommand{\asqspiCtrlRegInt}{ctrl\_reg\_s }
+\newcommand{\asqspiCtrlRegExt}{\textbf{QSPI0\_CTRL}\,}
+\newcommand{\asqspiCmdRegInt}{cmd\_reg\_s\,}
+\newcommand{\asqspiCmdRegExt}{\textbf{QSPI0\_CMD}\,}
+\newcommand{\asqspiAddrRegInt}{addr\_reg\_s\,}
+\newcommand{\asqspiAddrRegExt}{\textbf{QSPI0\_ADDR}\,}
+\newcommand{\asqspiLenRegInt}{len\_reg\_s\,}
+\newcommand{\asqspiLenRegExt}{\textbf{QSPI0\_LEN}\,}
+\newcommand{\asqspiDummyRegInt}{dummy\_reg\_s\,}
+\newcommand{\asqspiDummyRegExt}{\textbf{QSPI0\_DUMMY}\,}
+\newcommand{\asqspiStatusRegInt}{status\_reg\_s\,}
+\newcommand{\asqspiStatusRegExt}{\textbf{QSPI0\_STATUS}\,}
+\newcommand{\asqspiTxdataRegInt}{txdata\_reg\_s\,}
+\newcommand{\asqspiTxdataRegExt}{\textbf{QSPI0\_TXDATA}\,}
+\newcommand{\asqspiRxdataRegInt}{rxdata\_reg\_s\,}
+\newcommand{\asqspiRxdataRegExt}{\textbf{QSPI0\_RXDATA}\,}
+\newcommand{\asqspiFifostatRegInt}{fifostat\_reg\_s\,}
+\newcommand{\asqspiFifostatRegExt}{\textbf{QSPI0\_FIFOSTAT}\,}
+\newcommand{\asqspiICRRegInt}{icr\_reg\_s\,}
+\newcommand{\asqspiICRRegExt}{\textbf{QSPI0\_ICR}\,}
+\newcommand{\asqspiRISRegInt}{ris\_reg\_s\,}
+\newcommand{\asqspiRISRegExt}{\textbf{QSPI0\_RIS}\,}
+\newcommand{\asqspiISRRegInt}{isr\_reg\_s\,}
+\newcommand{\asqspiISRRegExt}{\textbf{QSPI0\_ISR}\,}
+\newcommand{\asqspiIMSCRegInt}{imsc\_reg\_s\,}
+\newcommand{\asqspiIMSCRegExt}{\textbf{QSPI0\_IMSC}\,}
+\newcommand{\asqspiMISRegInt}{mis\_reg\_s\,}
+\newcommand{\asqspiMISRegExt}{\textbf{QSPI0\_MIS}\,}
+\newcommand{\asqspiIDRegInt}{id\_reg\_s\,}
+\newcommand{\asqspiIDRegExt}{\textbf{QSPI0\_ID}\,}
+
+\newcommand{\asqspiClkdivRegInt}{clkdiv\_reg\_s\,}
+\newcommand{\asqspiClkdivRegExt}{\textbf{QSPI0\_CLKDIV}\,}
+\newcommand{\asqspiTimeoutRegInt}{timeout\_reg\_s\,}
+\newcommand{\asqspiTimeoutRegExt}{\textbf{QSPI0\_TIMEOUT}\,}
+
+
+\usepackage{tikz}
+\usetikzlibrary{shapes.arrows}
+\usetikzlibrary{positioning}
+\usetikzlibrary{automata}
+
+\begin{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Titel, author, date
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\ifthenelse{\equal{\deutsch}{false}}
+{\title{Specification - \aschip}}
+{\title{Spezifikation - \aschip}}
+\author{Prof. Dr.-Ing. A. Siggelkow}
+\date{\today}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Titelpage and table of content
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\pagenumbering{Alph}
+\begin{titlepage}
+  \maketitle
+  \thispagestyle{empty}
+\end{titlepage}
+\pagenumbering{arabic}
+%\tableofcontents
+\thispagestyle{empty}
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Set the chapter counter and relate the
+% equation numbers to the chapters
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\setcounter{chapter}{0}
+\numberwithin{equation}{section}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Document
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\input{\TEXTa 2do.tex}
+\input{\TEXTa 00_rwurv64i_all}
+\printbibliography
+\end{document}

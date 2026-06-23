@@ -1,0 +1,537 @@
+% ============================================================
+% FILE: latex_additions_v2.tex
+%
+% Integration instructions:
+%
+%   BLOCK A — Chapter 3 Architecture Concepts
+%     Insert under a new subsection within the architecture concepts chapter:
+%       \subsection{Attacks, Hazards and Mitigation Methodologies}
+%         \subsubsection{Meltdown and Spectre}
+%     Place after existing Section 3.0.8 (Register Concept) and before 3.0.9
+%     (Power Concept), or at whichever structural position is appropriate.
+%
+%   BLOCK B — Chapter 7 (new chapter): Attacks, Hazards and Mitigation
+%   Methodologies
+%     Create a new chapter file and add the \section{Meltdown and Spectre}
+%     block as the first section.
+%
+%   BLOCK C — Bibliography entries
+%     Paste into references.bib.
+%
+%   ASSUMED ARCHITECTURE EXTENSIONS (for this draft):
+%     The content is written assuming the design has been extended beyond the
+%     current RV64I single-core baseline to include:
+%       - Multi-core (dual- or quad-core) configuration with shared L2 cache
+%       - A deeper, explicitly pipelined implementation
+%         (Fetch -> Decode -> Issue -> Execute -> Writeback, >= 5 stages)
+%       - A shared L2 set-associative data cache in addition to per-core L1
+%     These extensions are treated as assumed; when the final specification
+%     confirms the exact parameters the placeholder values should be updated.
+% ============================================================
+
+
+% ============================================================
+% BLOCK A — Chapter 3 subsection (insert into existing Chapter 3)
+% ============================================================
+
+\subsection{Attacks, Hazards and Mitigation Methodologies}
+\label{sec:arch_hazards}
+
+\subsubsection{Meltdown and Spectre}
+\label{sec:arch_meltdown_spectre}
+
+The extension of the RWU64IM design to a multi-core configuration with a shared
+\mbox{L2} cache and a deeper execution pipeline introduces microarchitectural
+conditions relevant to transient execution attacks.  These attacks — specifically
+Meltdown (CVE-2017-5754)~\cite{lipp2018meltdown} and Spectre
+(CVE-2017-5753, CVE-2017-5715)~\cite{kocher2019spectre} — exploit the
+discrepancy between what a processor commits architecturally and what it executes
+microarchitecturally during speculative or out-of-order processing.
+
+Three architectural preconditions must hold simultaneously for a transient execution
+attack to be instantiable~\cite{kocher2019spectre,intel2018analysis}:
+(i)~speculative or out-of-order execution,
+(ii)~a shared and timing-observable cache hierarchy, and
+(iii)~a hardware-enforced isolation boundary (additionally required for Meltdown and
+Spectre Variant~2).
+
+The multi-core configuration of this design introduces a shared \mbox{L2} cache
+accessible by all cores.  Although the processor operates without a virtual memory
+system or hardware privilege separation, the shared cache provides a functional
+timing side-channel: access latency to a cached line differs measurably from a cold
+miss, and this difference is observable via the \texttt{rdcycle} CSR.  The per-core
+hardware branch predictor and the Reorder Buffer (ROB) enabling speculative execution
+constitute the remaining preconditions relevant to Spectre Variant~1.
+
+The implications for the current design and the applicable countermeasures are
+analysed in detail in Chapter~\ref{chap:attacks}.
+
+
+% ============================================================
+% BLOCK B — Chapter 7 \section{Meltdown and Spectre}
+% ============================================================
+%
+% Chapter preamble (place before this section):
+%
+% \chapter{Attacks, Hazards and Mitigation Methodologies}
+% \label{chap:attacks}
+%
+% \begin{table}[h]
+% \centering
+% \caption{Revision History -- Chapter 7}
+% \begin{tabular}{llll}
+% \hline
+% Version & Date & Author & Description \\
+% \hline
+% 1.0 & January 22, 2026 & Y. Sangale & Initial Draft \\
+% \hline
+% \end{tabular}
+% \end{table}
+%
+% This chapter analyses microarchitectural security hazards applicable to the
+% RWU64IM multi-core RISC-V design, covering transient execution attacks,
+% their architectural preconditions, applicability to the implemented
+% configuration, and the adopted countermeasures.
+% ============================================================
+
+\section{Meltdown and Spectre}
+\label{sec:meltdown_spectre}
+
+% ------------------------------------------------------------------
+\subsection{Background and Threat Model}
+% ------------------------------------------------------------------
+
+Meltdown and Spectre are classes of \emph{transient execution attacks}: they
+exploit instructions that are executed microarchitecturally but never committed
+to the architectural state~\cite{lipp2018meltdown,kocher2019spectre}.  The
+resulting microarchitectural state changes — specifically modifications to the
+cache hierarchy — persist after the transient instructions are discarded,
+providing a covert channel from which secret data can be recovered by timing
+measurement.
+
+The threat model assumes an attacker capable of executing unprivileged code on
+the system, controlling the inputs to shared code paths, and measuring execution
+time via the \texttt{rdcycle} counter.
+
+% ------------------------------------------------------------------
+\subsection{Architectural Preconditions}
+\label{subsec:preconditions}
+% ------------------------------------------------------------------
+
+Attack feasibility is determined by the simultaneous presence of the following
+conditions~\cite{kocher2019spectre,intel2018analysis,arm2018cache}:
+
+\begin{enumerate}
+  \item \textbf{Speculative / out-of-order (OoO) execution.}
+        A Reorder Buffer (ROB) allows the pipeline to execute instructions ahead
+        of their architectural validation.  Without this, no transient execution
+        window exists.
+  \item \textbf{Hardware branch predictor.}
+        Required for Spectre: the predictor enables speculative execution along
+        a predicted but architecturally incorrect path.  The BTB (Branch Target
+        Buffer) is additionally required for Variant~2.
+  \item \textbf{Shared, timing-observable cache.}
+        Both Meltdown and Spectre encode transiently accessed data into cache
+        state.  The encoding is exfiltrated by measuring the access latency
+        difference between a cache hit ($\leq 15$ cycles at \SI{80}{\mega\hertz})
+        and a cache miss to DRAM ($\geq 150$ cycles)~\cite{kocher2019spectre}.
+        A shared \mbox{L2} cache, accessible across all cores, provides a
+        persistent and observable side-channel.
+  \item \textbf{Hardware-enforced isolation boundary (attack-specific).}
+        Meltdown additionally requires a privilege boundary and a deferred
+        page-fault mechanism.  Spectre Variant~2 additionally requires separate
+        execution contexts sharing predictor state.
+\end{enumerate}
+
+Removing any single required precondition is sufficient to invalidate the
+corresponding attack class.
+
+% ------------------------------------------------------------------
+\subsection{Meltdown (CVE-2017-5754)}
+\label{subsec:meltdown}
+% ------------------------------------------------------------------
+
+\subsubsection{Mechanism}
+
+Meltdown exploits the temporal gap between the speculative execution of a
+faulting memory load and the enforcement of the access-control decision that
+generates the fault~\cite{lipp2018meltdown}.  The pipeline issues the load and
+continues executing dependent instructions before the MMU has resolved the
+permission check.  During this transient window the loaded value — drawn from a
+protected memory region — propagates into a cache-encoding instruction:
+
+\begin{verbatim}
+/* Step 1: faulting load from privileged address */
+unsigned char secret = *(unsigned char *)kernel_addr;
+
+/* Step 2: encode secret into cache state (transient) */
+temp = probe_array[secret * 512];
+\end{verbatim}
+
+The subsequent page fault flushes the ROB and restores the architectural
+register state, but the cache-line fill caused by \texttt{probe\_array} access
+is not reverted.  The attacker recovers the secret by measuring access latency
+across all 256 probe-array indices (Flush+Reload
+technique~\cite{lipp2018meltdown,gruss2016flushflush}):
+
+\begin{verbatim}
+uint64_t t0, t1;
+for (int i = 0; i < 256; i++) {
+    asm volatile ("rdcycle %0" : "=r"(t0));
+    volatile uint8_t v = probe_array[i * 512];
+    asm volatile ("rdcycle %0" : "=r"(t1));
+    if ((t1 - t0) < HIT_THRESHOLD) recovered_byte = i;
+}
+\end{verbatim}
+
+A placeholder for the Meltdown attack flow diagram is reserved below:
+
+\begin{figure}[h]
+\centering
+\fbox{\parbox{0.85\textwidth}{\centering\vspace{2cm}
+\textit{[Placeholder: Meltdown attack flow ---
+Flush $\to$ Faulting Load $\to$ Speculative Encode $\to$ ROB Flush
+$\to$ Reload $\to$ Secret Recovery]}
+\vspace{2cm}}}
+\caption{Meltdown attack execution flow on an OoO processor with virtual memory.}
+\label{fig:meltdown_flow}
+\end{figure}
+
+\subsubsection{Applicability to the RWU64IM Design}
+
+The RWU64IM implements physical addressing exclusively.  There are no page tables,
+no MMU, no \texttt{satp} register, and no page-fault exceptions.  Every load
+instruction targets a physical address and succeeds architecturally; no faulting
+access is generated and consequently no transient fault window is created.
+
+In a multi-core extension without virtual memory the situation is unchanged: adding
+cores and a shared \mbox{L2} cache does not introduce the page-fault mechanism that
+Meltdown requires.  The shared \mbox{L2} does increase the persistence and
+cross-core observability of the cache side-channel, but this is a necessary condition
+for Meltdown only after the other preconditions are satisfied.
+
+\begin{table}[h]
+\centering
+\caption{Meltdown Precondition Mapping for RWU64IM (Extended Configuration)}
+\label{tab:meltdown_precond}
+\begin{tabular}{lll}
+\hline
+\textbf{Required Precondition} & \textbf{Status in RWU64IM} & \textbf{Impact} \\
+\hline
+OoO execution / ROB           & Present (per core)        & Precondition met \\
+Virtual memory / MMU          & Absent                    & Attack impossible \\
+Privilege separation (U/S)    & Absent                    & Attack impossible \\
+Page-fault mechanism          & Absent                    & Attack impossible \\
+Shared cache (L1/L2)          & Present                   & Channel present \\
+\hline
+\end{tabular}
+\end{table}
+
+\textbf{Result:} Meltdown is structurally not applicable to the RWU64IM in any
+single-core or multi-core configuration that retains physical addressing and a single
+machine-mode privilege level.
+
+% ------------------------------------------------------------------
+\subsection{Spectre (CVE-2017-5753 / CVE-2017-5715)}
+\label{subsec:spectre}
+% ------------------------------------------------------------------
+
+\subsubsection{Mechanism — Variant 1 (Bounds Check Bypass)}
+
+Spectre Variant~1 exploits the branch predictor's training history to induce
+speculative execution of an out-of-bounds memory access~\cite{kocher2019spectre}.
+The attacker repeatedly invokes a victim function with in-bounds inputs to train
+the predictor, then supplies an out-of-bounds index.  The predictor speculatively
+enters the guarded block, executing:
+
+\begin{verbatim}
+/* Victim code (shared function) */
+if (x < array1_size) {
+    uint8_t val = array1[x];          /* out-of-bounds if x is malicious */
+    temp = probe_array[val * 512];    /* encodes val into cache */
+}
+\end{verbatim}
+
+The branch subsequently resolves as not-taken; the ROB discards the speculative
+results.  The cache-line fill caused by \texttt{probe\_array[val*512]} persists.
+The secret byte is recovered by the same Flush+Reload timing measurement as
+Meltdown.
+
+\subsubsection{Mechanism — Variant 2 (Branch Target Injection)}
+
+Variant~2 poisons the Branch Target Buffer to redirect an indirect branch in a
+victim execution context to an attacker-chosen code gadget~\cite{kocher2019spectre}.
+The gadget accesses sensitive data, encodes it into cache state, and the attacker
+recovers it via timing.  This attack requires separate, isolated execution contexts
+sharing a physical branch predictor.
+
+A placeholder for the Spectre attack flow diagram is reserved below:
+
+\begin{figure}[h]
+\centering
+\fbox{\parbox{0.85\textwidth}{\centering\vspace{2cm}
+\textit{[Placeholder: Spectre Variant~1 attack flow ---
+Train Predictor $\to$ Mispredict $\to$ Speculative OoB Access $\to$
+Cache Encode $\to$ Rollback $\to$ Timing Measurement]}
+\vspace{2cm}}}
+\caption{Spectre Variant~1 execution flow: bounds-check bypass via branch misprediction.}
+\label{fig:spectre_v1_flow}
+\end{figure}
+
+\subsubsection{Applicability to the RWU64IM Design}
+
+Table~\ref{tab:spectre_precond} maps each Spectre precondition to the extended
+RWU64IM configuration.
+
+\begin{table}[h]
+\centering
+\caption{Spectre Precondition Mapping for RWU64IM (Extended Multi-Core Configuration)}
+\label{tab:spectre_precond}
+\begin{tabular}{llll}
+\hline
+\textbf{Precondition} & \textbf{V1} & \textbf{V2} & \textbf{Status in RWU64IM} \\
+\hline
+Branch predictor (per-core)          & Required & Required & Present \\
+OoO execution / ROB (per-core)       & Required & Required & Present \\
+Shared cache (L2 across cores)       & Required & Required & Present \\
+Isolation boundary (HW-enforced)     & Optional\textsuperscript{a} & Required & Absent \\
+Separate execution contexts          & No       & Required & Absent \\
+Shared BTB across contexts           & No       & Required & Absent\textsuperscript{b} \\
+\hline
+\multicolumn{4}{l}{\textsuperscript{a} Required for a meaningful attack; see Variant~1 qualification below.} \\
+\multicolumn{4}{l}{\textsuperscript{b} All cores share machine-mode; no separate victim context exists.} \\
+\end{tabular}
+\end{table}
+
+\paragraph{Variant 1 — single trust domain.}
+All software on the RWU64IM executes in machine mode with uniform physical memory
+access.  In this configuration there is no security boundary to cross; leakage
+across a non-existent boundary has no security consequence.
+
+\paragraph{Variant 1 — multi-component software (conditional risk).}
+If the system runs co-resident software components (e.g.\ a cooperative \mbox{RTOS}
+with multiple tasks sharing the physical address space), a software-defined trust
+boundary emerges.  In this scenario Variant~1 is feasible: the hardware branch
+predictor can be trained by one task to induce speculative out-of-bounds reads in
+another task's execution context.  The shared \mbox{L2} cache amplifies the
+side-channel because a cache-line fill in one core's execution remains observable to
+all other cores via timing.  \textbf{This is the primary residual risk of the
+multi-core extension.}
+
+\paragraph{Variant 2.}
+Variant~2 requires a distinct, isolated victim execution context and shared
+predictor state across context boundaries (e.g.\ user/kernel or two OS processes).
+No such contexts exist in the RWU64IM privilege model; all code shares machine mode.
+Variant~2 is not applicable.
+
+% ------------------------------------------------------------------
+\subsection{Cache Timing Side-Channel}
+\label{subsec:cache_sidechannel}
+% ------------------------------------------------------------------
+
+A cache timing side-channel is present independent of Meltdown/Spectre
+applicability~\cite{gruss2016flushflush,arm2018cache}.  The conditions are:
+
+\begin{itemize}
+  \item Per-core \mbox{L1} data cache with data-dependent fill behaviour.
+  \item Shared \mbox{L2} cache accessible by all cores, whose eviction pattern
+        reflects cross-core memory access activity.
+  \item \texttt{rdcycle} CSR accessible in machine mode, providing cycle-accurate
+        timing resolution sufficient to distinguish a cache hit from a miss.
+\end{itemize}
+
+The cross-core observability introduced by the shared \mbox{L2} extends the
+attack surface relative to the single-core baseline: a cache-line filled by
+speculative execution on core~A is observable from core~B through timing, enabling
+cross-core Flush+Reload or Prime+Probe measurements~\cite{gruss2016flushflush}.
+
+% ------------------------------------------------------------------
+\subsection{Countermeasures}
+\label{subsec:countermeasures}
+% ------------------------------------------------------------------
+
+\subsubsection{Software Countermeasures}
+
+\paragraph{Speculation barriers (\texttt{fence}).}
+Insert a \texttt{fence} instruction immediately after bounds-check branches at
+software trust boundaries.  The fence prevents the pipeline from issuing
+instructions beyond that point until all prior instructions have been architecturally
+committed, collapsing the speculative execution window:
+
+\begin{verbatim}
+if (x < size) {
+    asm volatile ("fence");
+    val = array[x];
+}
+\end{verbatim}
+
+\paragraph{Index masking (branch elimination).}
+Replace conditional bounds checks with bitwise masking for power-of-two array sizes.
+This eliminates the conditional branch and removes the branch predictor dependency
+entirely:
+
+\begin{verbatim}
+x   = x & (size - 1);   /* no branch: no misprediction possible */
+val = array[x];
+\end{verbatim}
+
+\paragraph{Constant-time access patterns.}
+Security-sensitive routines (cryptographic key operations, inter-task shared
+buffers) must access data unconditionally and select results using arithmetic masks
+rather than data-dependent branches, eliminating data-dependent cache footprints.
+
+\paragraph{Cycle-counter restriction.}
+Setting \texttt{mcounteren.CY~=~0} prevents machine-mode code from delegating
+\texttt{rdcycle} access to less-privileged contexts (relevant if U-mode is added in
+a future revision).  On the current single-privilege design this reduces the
+precision available to tasks within a cooperative multitasking environment if the
+scheduler explicitly gates the counter.
+
+\subsubsection{Hardware Countermeasures}
+
+\paragraph{L2 cache partitioning.}
+The shared \mbox{L2} cache should be partitioned by software component (e.g.\ by
+task or core) using cache-way allocation, if supported by the cache controller
+implementation.  This prevents cross-component or cross-core eviction-based
+observation.  Each partition must be sized to accommodate the working set of the
+assigned component.
+
+\paragraph{Speculative cache-fill suppression.}
+The strongest hardware mitigation is to suppress cache-line fills from load
+instructions that are subsequently flushed from the ROB without architectural
+commitment.  This aligns microarchitectural cache state with the architectural
+commit boundary, eliminating the persistent side-channel that all transient
+execution attacks depend on.  Implementation requires tagging each speculative
+load in the ROB with a \emph{speculative} flag and gating the cache-fill write
+until the instruction reaches the commit stage:
+
+\begin{figure}[h]
+\centering
+\fbox{\parbox{0.85\textwidth}{\centering\vspace{2cm}
+\textit{[Placeholder: ROB commit-gated cache-fill suppression diagram ---
+Speculative Load $\to$ ROB Entry (speculative flag) $\to$
+Commit? $\to$ Yes: allow fill / No: suppress fill]}
+\vspace{2cm}}}
+\caption{Commit-gated cache-fill suppression: cache updates are held until
+ROB commit, preventing transient execution from producing observable side-effects.}
+\label{fig:cache_suppression}
+\end{figure}
+
+\subsubsection{Applicability Summary}
+
+\begin{table}[h]
+\centering
+\caption{Countermeasure Applicability — RWU64IM Extended Configuration}
+\label{tab:countermeasures}
+\begin{tabular}{lllll}
+\hline
+\textbf{Countermeasure} & \textbf{Targets} & \textbf{Type} &
+\textbf{Cost} & \textbf{Effectiveness} \\
+\hline
+\texttt{fence} barriers          & Spectre V1          & SW & Perf.\ stall  & High \\
+Index masking                    & Spectre V1          & SW & Negligible    & High \\
+Constant-time access             & Cache side-channel  & SW & Moderate      & High \\
+\texttt{mcounteren} restriction  & Cache side-channel  & SW & Negligible    & Medium \\
+L2 cache way partitioning        & Cache side-channel  & HW & Area          & High \\
+Speculative cache-fill suppress. & All classes         & HW & Area/latency  & Very High \\
+\hline
+\end{tabular}
+\end{table}
+
+% ------------------------------------------------------------------
+\subsection{Vulnerability Summary}
+% ------------------------------------------------------------------
+
+\begin{table}[h]
+\centering
+\caption{Transient Execution Vulnerability Assessment — RWU64IM Multi-Core Extension}
+\label{tab:vuln_summary_ch7}
+\begin{tabular}{lll}
+\hline
+\textbf{Vulnerability} & \textbf{Status} & \textbf{Determining Factor} \\
+\hline
+Meltdown (CVE-2017-5754)   & Not applicable        &
+  No virtual memory; no page-fault mechanism \\
+Spectre V1 (CVE-2017-5753) & Conditionally present &
+  HW preconditions met; risk conditional on multi-component SW \\
+Spectre V2 (CVE-2017-5715) & Not applicable        &
+  No separate execution contexts; no isolated victim domain \\
+L1 cache timing channel    & Present (per core)    &
+  Shared per-core L1; \texttt{rdcycle} accessible \\
+L2 cache timing channel    & Present (cross-core)  &
+  Shared L2 observable across all cores \\
+\hline
+\end{tabular}
+\end{table}
+
+The design achieves immunity to Meltdown and Spectre~V2 through the \emph{absence of
+required architectural preconditions} rather than through active mitigation.  The
+primary residual risk is Spectre~V1 in multi-task software deployments and the
+cross-core cache timing channel introduced by the shared \mbox{L2}.  Both are
+addressable by the software and hardware countermeasures described in
+Section~\ref{subsec:countermeasures}.
+
+
+% ============================================================
+% BLOCK C — Bibliography entries (add to references.bib)
+% ============================================================
+%
+% @inproceedings{lipp2018meltdown,
+%   author    = {Lipp, Moritz and Schwarz, Michael and Gruss, Daniel and
+%                Prescher, Thomas and Haas, Werner and Horn, Jann and
+%                Mangard, Stefan and Kocher, Paul and Genkin, Daniel and
+%                Yarom, Yuval and Hamburg, Mike},
+%   title     = {{Meltdown: Reading Kernel Memory from User Space}},
+%   booktitle = {27th USENIX Security Symposium},
+%   year      = {2018},
+%   pages     = {973--990},
+%   publisher = {USENIX Association}
+% }
+%
+% @inproceedings{kocher2019spectre,
+%   author    = {Kocher, Paul and Horn, Jann and Fogh, Anders and Genkin, Daniel and
+%                Gruss, Daniel and Haas, Werner and Hamburg, Mike and Lipp, Moritz and
+%                Mangard, Stefan and Prescher, Thomas and Schwarz, Michael and
+%                Yarom, Yuval},
+%   title     = {{Spectre Attacks: Exploiting Speculative Execution}},
+%   booktitle = {40th IEEE Symposium on Security and Privacy},
+%   year      = {2019},
+%   pages     = {1--19},
+%   publisher = {IEEE}
+% }
+%
+% @inproceedings{gruss2016flushflush,
+%   author    = {Gruss, Daniel and Maurice, Cl{\'{e}}mentine and
+%                Fogh, Anders and Mangard, Stefan},
+%   title     = {{Flush+Flush: A Fast and Stealthy Cache Attack}},
+%   booktitle = {Detection of Intrusions and Malware, and Vulnerability
+%                Assessment (DIMVA)},
+%   year      = {2016},
+%   pages     = {279--299},
+%   publisher = {Springer}
+% }
+%
+% @techreport{intel2018analysis,
+%   author      = {{Intel Corporation}},
+%   title       = {{Analysis of Speculative Execution Side Channels}},
+%   institution = {Intel Corporation},
+%   year        = {2018},
+%   note        = {White Paper, Revision~4.0}
+% }
+%
+% @techreport{arm2018cache,
+%   author      = {{ARM Limited}},
+%   title       = {{Cache Speculation Side-channels}},
+%   institution = {ARM Limited},
+%   year        = {2018},
+%   note        = {Whitepaper, Version~2.4}
+% }
+%
+% @techreport{riscv2022zicbom,
+%   author      = {{RISC-V International}},
+%   title       = {{RISC-V Cache Management Operation ISA Extensions (Zicbom)}},
+%   institution = {RISC-V International},
+%   year        = {2022},
+%   note        = {Version~1.0}
+% }
+% ============================================================

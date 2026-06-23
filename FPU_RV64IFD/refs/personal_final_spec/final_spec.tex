@@ -1,0 +1,47 @@
+% main.tex
+\documentclass[
+    12pt,
+    a4paper,
+    oneside
+]{report}
+
+% Load all packages & settings
+\input{preamble}
+
+\input{glossary}
+
+\begin{document}
+
+\input{title_page.tex}
+
+\pagenumbering{roman}
+\setcounter{page}{2}
+
+\tableofcontents
+\listoffigures
+\listoftables
+\printglossaries
+
+\newpage
+\pagenumbering{arabic}
+
+% --- Main Chapters ---
+\input{chapters/spec_chap1_intro.tex}
+\input{chapters/spec_chap2_prod_overview.tex}
+\input{chapters/spec_chap3_arch_concepts.tex}
+\input{chapters/spec_chap4_des_ele.tex}
+\input{chapters/spec_chap5_toolchain.tex}
+\input{chapters/spec_chap6_test_debug.tex}
+\input{chapters/spec_chap7_mem_map.tex}
+\input{chapters/spec_chap8_ele_chars.tex}
+% --- References ---
+\bibliographystyle{IEEEtran}
+\nocite{*}
+\bibliography{references.bib}
+
+% --- Appendices / Annexures ---
+\clearpage
+\appendix
+
+
+\end{document}

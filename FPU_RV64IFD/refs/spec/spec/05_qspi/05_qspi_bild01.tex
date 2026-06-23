@@ -1,0 +1,44 @@
+\begin{figure}[H] 
+\centering
+\begin{tikzpicture}
+% background, gray rectangles
+\filldraw[fill=lightgray, draw=black] (0,0) rectangle (10,4);
+\filldraw[fill=lightgray, draw=black] (0,4) rectangle (10,7);
+% peropheral kernel
+\filldraw[fill=white, draw=black] (2,5) rectangle (8,6);
+\draw (5,5.5) node[draw, color=white, fill=white, text=black] {QSPI peripheral kernel};
+% register, IRQ, sync., FIFO
+\draw (1.5,4) node[draw, color=black, fill=white, text=black, align=center] {Clock Gating \\ Block};
+\draw (4,4) node[draw, color=black, fill=white, text=black, align=center] {Sync. \\ Block};
+\draw (2,2.5) node[draw, color=black, fill=white, text=black, align=center] {Service Request \\ Block};
+\draw (5,2.5) node[draw, color=black, fill=white, text=black, align=center] {SFR \\ Block};
+\draw (7.5,2.5) node[draw, color=black, fill=white, text=black, align=center] {TX \\ FIFO};
+\draw (9,2.5) node[draw, color=black, fill=white, text=black, align=center] {RX \\ FIFO};
+\draw (5,0.25) node[draw, color=black, fill=white, text=black] {Slave BPI};
+\node at (8,4.25) {Kernel clock domain};
+\node at (8,0.25) {Bus clock domain};
+\node at (1,0.25) {QSPI};
+% outside clock connection
+\draw[->] (-1,0.25) -- (0, 0.25);
+\node at (-2,0.25) {kernel clock};
+% outside chip NOR-Flash
+\draw (5,9.5) node[draw, color=black, fill=white, text=black] {NOR-Flash};
+% ... data line
+\draw[<->] (5,7) -- (5, 9.2) node[midway, above=2pt, sloped] {\small \asqspiData};
+\node at (5,8) (slash) {/};
+\node[above=-1pt] at (slash.east) {\small 4};
+% ... clock line
+\draw[->] (4.2,7) -- (4.2, 9.2) node[midway, above=2pt, sloped] {\small \asqspiSCK};
+% ... chip select
+\draw[->] (6,7) -- (6, 9.2) node[midway, above=2pt, sloped] {\small  \asqspiCS };
+% IRQ
+\draw (1,0) -- (1,-0.5);
+\draw[->] (1,-0.5) -- (0, -0.5);
+\node at (-1,-0.5) {qspi\_irq};
+% Bus
+\node [double arrow, draw, fill=white, minimum height=1cm] at (5,-2) {WB-Bus};
+\node [single arrow, draw, fill=white, minimum height=1.5cm, minimum width=1cm, shape border rotate=90] at (5,-1.0) {};
+\end{tikzpicture}
+\caption{QSPI asSlaveBPI Peripheral}
+\label{fig:asqspi01}
+\end{figure}

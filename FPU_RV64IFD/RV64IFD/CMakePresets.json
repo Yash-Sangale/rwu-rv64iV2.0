@@ -1,0 +1,171 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "vivado",
+      "displayName": "Vivado / xsim  (Windows or Linux)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "SIM": "vivado",
+        "WAVE": "OFF"
+      }
+    },
+    {
+      "name": "vivado-wave",
+      "displayName": "Vivado / xsim  — waveform capture ON",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "SIM": "vivado",
+        "WAVE": "ON"
+      }
+    },
+    {
+      "name": "verilator",
+      "displayName": "Verilator  (Linux / macOS / WSL)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "SIM": "verilator",
+        "WAVE": "OFF"
+      }
+    },
+    {
+      "name": "verilator-wave",
+      "displayName": "Verilator  — VCD + GTKWave",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "SIM": "verilator",
+        "WAVE": "ON"
+      }
+    },
+    {
+      "name": "ci-linux",
+      "displayName": "CI  (Verilator, Linux, no waves)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "SIM": "verilator",
+        "WAVE": "OFF"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "default",
+      "configurePreset": "vivado"
+    },
+    {
+      "name": "firmware",
+      "displayName": "Build all firmware",
+      "configurePreset": "vivado",
+      "targets": [
+        "firmware_all"
+      ]
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "unit",
+      "displayName": "All unit tests  (vivado)",
+      "configurePreset": "vivado",
+      "filter": {
+        "include": {
+          "label": "unit"
+        }
+      },
+      "execution": {
+        "jobs": 4,
+        "timeout": 120
+      },
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "unit-verilator",
+      "displayName": "All unit tests  (verilator)",
+      "configurePreset": "verilator",
+      "filter": {
+        "include": {
+          "label": "unit"
+        }
+      },
+      "execution": {
+        "jobs": 8,
+        "timeout": 120
+      },
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "wave",
+      "displayName": "Waveform run  (vivado, single job)",
+      "configurePreset": "vivado-wave",
+      "execution": {
+        "jobs": 1
+      },
+      "output": {
+        "outputOnFailure": true,
+        "verbosity": "verbose"
+      }
+    },
+    {
+      "name": "wave-verilator",
+      "displayName": "Waveform run  (verilator + GTKWave)",
+      "configurePreset": "verilator-wave",
+      "execution": {
+        "jobs": 1
+      },
+      "output": {
+        "outputOnFailure": true,
+        "verbosity": "verbose"
+      }
+    },
+    {
+      "name": "synth",
+      "displayName": "Synthesis runs  (vivado, sequential)",
+      "configurePreset": "vivado",
+      "filter": {
+        "include": {
+          "label": "synth"
+        }
+      },
+      "execution": {
+        "jobs": 1,
+        "timeout": 3600
+      },
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "ci",
+      "displayName": "CI  (verilator, all tests)",
+      "configurePreset": "ci-linux",
+      "execution": {
+        "jobs": 8,
+        "timeout": 120
+      },
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "fw",
+      "displayName": "All firmware builds",
+      "configurePreset": "vivado",
+      "filter": {
+        "include": {
+          "label": "fw"
+        }
+      },
+      "execution": {
+        "jobs": 8
+      }
+    }
+  ]
+}

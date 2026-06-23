@@ -1,0 +1,512 @@
+% ============================================================
+%   CHAPTER 3: Architecture Concepts
+% ============================================================
+
+\chapter{Architecture Concepts}
+\label{chap:architecture_concepts}
+
+\textcolor{blue}{\textbf{\textit{Concepts related to power management, security, Test and debug will be fully defined in the final specification revision.}}}
+
+\begin{table}[H]
+      \caption{Revision History – Chapter 3}
+      \centering
+      \begin{tabular}{llll}
+            \toprule
+            Version & Date             & Author     & Description                        \\
+            \midrule
+            1.0     & January 22, 2026 & Y. Sangale & Initial Draft                      \\
+            \midrule
+            1.2     & April 13, 2026   & Y. Sangale & Added  Meltdown \& Spectre concept \\
+            \midrule
+            1.1     & April 21, 2026   & Y. Sangale & Added FPU architecture concept     \\
+            \bottomrule
+      \end{tabular}
+\end{table}
+
+The architecture consists of a processing subsystem (\gls{cpu} + \gls{fpu}), peripheral subsystem, power management unit, and external interface controllers. It provides a high-level technical description of the \gls{cpu} core, memory subsystem, bus structure, interrupt design, clocking strategy, \gls{fpu} and register architecture. Each block communicates via a shared system bus
+
+The logic style used here is as often as possible a "one pulse" logic. This means that all signals are valid for exactly one clock cycle, and the next state is computed based on the current state and inputs. This approach simplifies timing analysis and reduces the likelihood of glitches or metastability issues.
+
+Figure~\ref{fig:asArch01} illustrates the pulse-based enable logic.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.9\textwidth]{arch01.png}
+\caption{Pulse-based enable logic for synchronous control signal generation}
+\label{fig:asArch01}
+\end{figure}
+
+The activation signal is generated synchronously with the system clock and is aligned to its rising edge (green). Due to synchronous logic behavior, the rising edge of the activation signal is produced with a one-cycle latency relative to the triggering clock edge.
+On the subsequent rising edge of the system clock (red), the activation signal is deasserted. Similarly, the falling edge of the activation signal exhibits a small propagation delay with respect to the clock.
+As a result, the activation signal remains asserted for exactly one system clock period. This pulse can be used to control downstream synchronous components (e.g., a counter). The counter increments only when the activation signal is high and a rising edge of the system clock occurs (red).
+
+
+\section{Technology}
+
+The microcontroller is conceptually targeted for implementation in a modern
+\textbf{90\,nm CMOS technology node}. This node provides a balanced compromise
+between integration density, power efficiency, and manufacturing cost, making
+it suitable for compact embedded microcontrollers and low-complexity \gls{SoC}
+designs.
+
+The 90\,nm node enables:
+\begin{itemize}
+      \item Higher operating frequencies compared to older planar CMOS nodes.
+      \item Reduced dynamic and static power consumption.
+      \item Dense \gls{sram} bitcells allowing larger memories in a small silicon
+            footprint.
+\end{itemize}
+
+Although the conceptual design and functional model are developed and validated
+using synthesizable \gls{hdl} on \gls{fpga} platforms, the microarchitecture,
+clocking structures, and memory system were designed with 90\,nm \gls{asic}
+fabrication constraints in mind. This includes fully synchronous logic,
+controlled critical paths, and modular blocks suitable for automated
+place-and-route flows.
+
+
+\section{CPU Concept} 
+
+\textbf{Note:} Unlike the original RWU-RV64I specification, which implements a
+single-cycle CPU, the RWU64IMD design adopts a pipelined architecture to improve
+performance.
+
+The \gls{cpu} core is a compact, single instruction \gls{rv64i}
+processor, extended with a FPU implementing the RISC-V D-extension
+(Double-precision floating-point). The combined \gls{cpu}+\gls{fpu} supports:
+
+\begin{itemize}
+      \item \textbf{Pipeline:} A simple scalar \gls{pipeline} (Fetch–Decode–Execute–Writeback) without speculation or out-of-order features. \textcolor{blue}{To be Implemented in the near future.}
+      \item \textbf{\gls{isa} Support:} Fully compliant with \gls{rv64i} + \gls{rv64m} + \gls{rv64a} + \gls{rv64d}.
+      \item \textbf{Integer Datapath:} 64-bit \gls{alu}, 32 × 64-bit integer registers (x0–x31) and internal buses.
+      \item \textbf{Floating-Point Datapath:} 64-bit \gls{fpu}, 32 × 64-bit FP registers (f0–f31)registers, and internal buses.
+      \item \textbf{Register File:} 32 × 64-bit general-purpose registers (x0–x31), with direct \gls{cpu} access (no bus).
+      \item \textbf{FP Register File:} shared with integer register file; not memory-mapped.
+      \item \textbf{Floating-Point Status/Control Register (fcsr):} Contains rounding mode (frm) and accrued exception flags (fflags).
+      \item \textbf{FP Memory Access:} sFLD/FSD instructions share D-MEM data path with integer load/store.
+      \item \textbf{Memory Access Model:} \gls{Harvard} architecture — separate \gls{I-MEM} and \gls{D-MEM} buses.
+            \begin{itemize}
+                  \item Dedicated instruction interface to \gls{I-MEM}.
+                  \item Dedicated data interface to \gls{D-MEM}.
+                  \item Memory-mapped I/O via Wishbone for all peripherals.
+            \end{itemize}
+      \item \textbf{Program Counter:} 64-bit \gls{pc} with generation logic (\gls{pc} +4, branch target, jump target).
+      \item \textbf{Interrupt Integration:} Receives a single aggregated interrupt line from the Interrupt Controller
+            and vectoring is performed as per \gls{riscv} rules.
+\end{itemize}
+
+
+
+\section{Memory Concept}
+The memory subsystem is based on a clean \gls{Harvard} architecture with
+separated instruction and data paths.
+
+\begin{itemize}
+      \item \textbf{Instruction Memory (\gls{I-MEM}):}
+            \begin{itemize}
+                  \item 64\,KB read-only memory for program storage.
+                  \item Dedicated \gls{cpu} instruction fetch path (non-Wishbone).
+                  \item High-performance single-cycle access for most operations.
+            \end{itemize}
+
+      \item \textbf{Data Memory (\gls{D-MEM}):}
+            \begin{itemize}
+                  \item 64\,KB data RAM for stack, heap, and program data.
+                  \item Direct \gls{cpu} data access (non-Wishbone).
+                  \item Fully synchronous with \gls{cpu} core.
+            \end{itemize}
+
+      \item \textbf{Memory-Mapped I/O:}
+            \begin{itemize}
+                  \item Peripherals mapped in the 0x1000\_0000 address region.
+                  \item Accessed exclusively via the Wishbone peripheral bus.
+            \end{itemize}
+
+      \item \textbf{Extensibility:}
+            \begin{itemize}
+                  \item Optional I-Cache and D-Cache may be added in future without changing the
+                        \gls{cpu}–bus interface.
+            \end{itemize}
+\end{itemize}
+
+\subsection{Memory Map}
+
+The system uses a fixed physical address map:
+
+\begin{itemize}
+    \item \textbf{0x0000\_0000 – 0x0000\_FFFF:} Instruction Memory (64 KB)
+    \item \textbf{0x0001\_0000 – 0x0001\_FFFF:} Data Memory (64 KB)
+    \item \textbf{0x1000\_0000 – 0x1FFF\_FFFF:} Memory-Mapped Peripherals
+\end{itemize}
+
+\section{Software Architecture Concept}
+
+The software architecture of the RWU64IMD microcontroller is based on a
+bare-metal execution model without an operating system. Programs are executed
+directly from Instruction Memory (\gls{I-MEM}), with full control over hardware
+resources via memory-mapped registers.
+
+\begin{itemize}
+    \item \textbf{Execution Model:}
+          Single program execution starting from a fixed reset vector.
+    \item \textbf{Toolchain Support:}
+          Standard RISC-V GCC-based toolchain targeting RV64IMD ISA.
+    \item \textbf{Memory Access:}
+          Direct addressing of Instruction Memory, Data Memory, and peripherals.
+    \item \textbf{Interrupt Handling:}
+          Machine-mode interrupt handling using vector-based dispatch.
+\end{itemize}
+
+No virtual memory or operating system abstraction is provided in the baseline
+implementation. Future extensions may include runtime libraries or lightweight
+RTOS integration.
+
+\section{Interprocessor Communication Concept}
+
+In the baseline implementation, the RWU64IMD system is a single-core architecture
+and does not require interprocessor communication.
+
+For future multi-core extensions, communication between cores is expected to be
+implemented using shared memory and synchronization primitives.
+
+\begin{itemize}
+    \item \textbf{Shared Memory:}
+          Communication via shared Data Memory or shared L2 cache.
+    \item \textbf{Synchronization:}
+          Atomic instructions (RV64A) used for mutual exclusion and coordination.
+    \item \textbf{Interrupt-Based Signaling:}
+          Inter-core interrupts may be introduced for event notification.
+\end{itemize}
+
+\section{Interrupt Concept}
+The interrupt subsystem is based on a configurable multi-source interrupt
+controller supplying a single interrupt input to the \gls{cpu}.
+
+\begin{itemize}
+      \item \textbf{\gls{IRQ} Lines:} 8 independent inputs (\texttt{\gls{IRQ}[7:0]}) with per-line configuration.
+      \item \textbf{Trigger Types:}
+            \begin{itemize}
+                  \item Level-high
+                  \item Rising edge
+                  \item Falling edge
+                  \item Both edges
+                  \item Pulse/one-shot
+            \end{itemize}
+      \item \textbf{Edge Detection:} Implemented using per-line previous-state registers.
+      \item \textbf{Control Registers:}
+            Mask, type-select, and pending-status registers accessible via Wishbone.
+      \item \textbf{Vector Computation:}
+            \[
+                  \text{ISR Vector} = \text{BASE\_ADDR} + (\text{\gls{IRQ}\_ID} \times 0x10)
+            \]
+      \item \textbf{Priority Model:} Fixed priority (IRQ0 highest) for the initial revision.
+      \item \textbf{\gls{cpu} Interface:} Outputs a single interrupt line to the \gls{cpu}'s machine-mode interrupt system.
+\end{itemize}
+
+\section{Bus Concept}
+The microcontroller employs a simple and predictable communication architecture
+centered around a \textbf{single-master bus topology}. The \gls{cpu} core is
+the only bus master and is responsible for initiating all data and peripheral
+access transactions. This simplifies arbitration, reduces latency, and provides
+deterministic behavior suitable for education, prototyping, and low-complexity
+embedded applications.
+
+The system uses two categories of interconnects:
+
+\begin{enumerate}
+      \item \textbf{Direct \gls{cpu} Connections}
+            The following modules are connected directly to the \gls{cpu} datapath and do not use the system bus:
+            \begin{itemize}
+                  \item \textbf{Instruction Memory (\gls{I-MEM}):} Accessed through a dedicated instruction fetch interface.
+                  \item \textbf{Data Memory (\gls{D-MEM}):} Connected through a dedicated data access path for load/store instructions.
+                  \item \textbf{Register File (RF):} Integrated directly into the \gls{cpu} \gls{pipeline}.
+            \end{itemize}
+
+            These direct connections enable single-cycle access to critical datapath
+            components and support a clean \gls{Harvard} architectural split.
+
+      \item \textbf{Wishbone-Based Peripheral Bus}
+            All other memory-mapped peripherals are connected using a \textbf{Wishbone-compliant} slave interface.
+            This bus is used for:
+            \begin{itemize}
+                  \item General Purpose I/O (\gls{gpio}),
+                  \item Universal Asynchronous Receiver/Transmitter (\gls{uart}),
+                  \item Quad-SPI Master (\gls{qspi}),
+                  \item Interrupt Controller,
+            \end{itemize}
+
+            The Wishbone bus provides standardized signaling for address, data, strobes,
+            and acknowledgments, enabling:
+            \begin{itemize}
+                  \item Modular and plug-and-play peripheral integration,
+                  \item Predictable, single-master timing behavior,
+                  \item Straightforward extension with new peripherals,
+                  \item Clean separation between \gls{cpu} datapath and peripheral logic.
+            \end{itemize}
+\end{enumerate}
+
+\subsection{Wishbone Protocol Specification}
+
+The peripheral interconnect follows the Wishbone B4 classic protocol. 
+
+\begin{itemize}
+    \item \textbf{Master Signals:}
+          \texttt{ADR}, \texttt{DAT\_W}, \texttt{DAT\_R}, \texttt{WE}, \texttt{STB}, \texttt{CYC}
+    \item \textbf{Slave Signals:}
+          \texttt{ACK}, \texttt{STALL}, \texttt{ERR}
+\end{itemize}
+
+A transaction is initiated by the CPU asserting \texttt{CYC} and \texttt{STB}
+along with a valid address. The slave responds with \texttt{ACK} to complete
+the transfer.
+
+The design follows a single-master configuration, eliminating arbitration
+complexity and ensuring deterministic timing behavior.
+
+
+\section{System Control Concept}
+System control is centered around a simple and robust global reset
+architecture. The microcontroller implements an \textbf{external
+      \gls{gpio}-based reset input}, which provides a direct and intuitive mechanism
+to reinitialize the entire system.
+
+\begin{itemize}
+      \item \textbf{External Reset Input:}
+            A dedicated \gls{gpio} pin is configured as a reset input. When driven \textbf{low}, it asserts a
+            system-wide synchronous reset.
+
+      \item \textbf{Reset Behavior:}
+            \begin{itemize}
+                  \item All \gls{cpu} state (\gls{pc} , registers, CSRs) is reset to defined initial
+                        v\gls{alu}es.
+                  \item Instruction Memory and Data Memory interfaces are reset.
+                  \item All Wishbone peripherals (\gls{gpio}, \gls{uart}, \gls{qspi}, \gls{IRQ}
+                        controller, Clock Control, JTAG region) return to default configuration.
+                  \item All internal state machines return to IDLE.
+            \end{itemize}
+
+      \item \textbf{Synchronization:}
+            The external reset signal passes through a two-stage synchronizer to ensure safe integration into the
+            main clock domain.
+
+      \item \textbf{Reset Release:}
+            When the external \gls{gpio} reset input returns high, the system exits reset synchronously at the next
+            active clock edge.
+
+\end{itemize}
+
+This minimal reset architecture provides deterministic system initialization
+and simplifies external control during prototyping and debugging.
+
+\section{Register Concept}
+The Register Concept defines the structure and behavior of all
+\textbf{memory-mapped peripheral registers} accessible through the Wishbone
+bus. These registers are used to configure, control, and monitor the operation
+of \gls{gpio}, \gls{uart}, \gls{qspi}, the Interrupt Controller, the Clock
+Control Unit, and other on-chip peripherals.
+
+\begin{itemize}
+      \item \textbf{Scope:}
+            Only peripheral registers are included.
+            \gls{cpu}-internal structures such as the Register File and CSRs are part of the \gls{cpu} microarchitecture
+            and are not memory-mapped.
+
+      \item \textbf{Register Types:}
+            \begin{itemize}
+                  \item Control registers (enable, mode select, configuration)
+                  \item Status registers (interrupt flags, error states, peripheral activity)
+                  \item Data registers (\gls{uart} TX/RX, \gls{qspi} data buffer, \gls{gpio}
+                        input/output)
+                  \item Configuration registers (\gls{IRQ} trigger type, \gls{gpio} direction, clock
+                        divisor)
+            \end{itemize}
+
+      \item \textbf{Access Method:}
+            All registers are accessed via standard 32-bit or 64-bit \gls{cpu} load/store instructions through the
+            Wishbone data bus.
+
+      \item \textbf{Address Alignment:}
+            All registers are aligned to 32-bit word boundaries.
+
+      \item \textbf{Reset Behavior:}
+            On system reset, all registers revert to defined default states to ensure predictable system startup.
+
+\end{itemize}
+
+\section{Clock Concept}
+The microcontroller uses an 80\,MHz main system clock with optional peripheral
+clock division.
+
+\begin{itemize}
+      \item \textbf{Core Clock:} 80\,MHz clock feeding \gls{cpu}, \gls{I-MEM}, and \gls{D-MEM}.
+      \item \textbf{Peripheral Clocks:} Generated via a programmable divider block:
+            \begin{itemize}
+                  \item Divide-by-2, /4, /8, etc.
+                  \item Per-peripheral selectable clock domains.
+            \end{itemize}
+      \item \textbf{Clock Control Registers:} Accessible via Wishbone.
+      \item \textbf{Clock Domain Crossing:}
+            Standard two-flip-flop synchronizers used where required (e.g., \gls{uart}, \gls{qspi}).
+\end{itemize}
+
+\section{Power Concept}
+
+\textcolor{blue}{\textbf{\textit{Section to be completed in the final document revision.}}}
+
+\section{Power Concept}
+
+The RWU64IMD microcontroller is designed for low-power embedded applications.
+
+\begin{itemize}
+    \item \textbf{Static Power:} Reduced through CMOS technology scaling.
+    \item \textbf{Dynamic Power:} Controlled via clock gating and frequency scaling.
+    \item \textbf{Clock Gating:} Peripheral clocks can be selectively disabled.
+\end{itemize}
+
+Future extensions may include dynamic voltage scaling and sleep modes.
+
+
+\section{System Protection and Security Concept}
+
+\textcolor{blue}{\textbf{\textit{Section to be completed in the final document revision.}}}
+
+The baseline architecture does not implement hardware-enforced isolation such
+as privilege levels or virtual memory.
+
+\begin{itemize}
+    \item \textbf{Execution Mode:} Single machine-mode operation.
+    \item \textbf{Memory Protection:} No PMP or MMU in baseline design.
+\end{itemize}
+
+Future extensions may include:
+\begin{itemize}
+    \item Physical Memory Protection (PMP),
+    \item Privilege separation (User/Supervisor modes),
+    \item Secure boot mechanisms.
+\end{itemize}
+
+
+
+\section{Debug Concept}
+
+\textcolor{blue}{\textbf{\textit{Section to be completed in the final document revision.}}}
+
+\section{Test and Debug Concept}
+
+Debug and program loading are supported through a JTAG interface.
+
+\begin{itemize}
+    \item \textbf{Program Loading:}
+          Instruction Memory can be programmed via JTAG.
+    \item \textbf{Debug Access:}
+          External debugger can access internal registers and memory.
+    \item \textbf{Breakpoints:}
+          Future support for hardware breakpoints and single-step execution.
+\end{itemize}
+
+The debug interface is intended for FPGA prototyping and development and may
+be extended in future revisions to support advanced debugging features.
+
+
+\section{Attacks, Hazards and Mitigation Methodologies}
+\label{sec:arch_hazards}
+
+\subsection{Meltdown and Spectre}
+\label{sec:arch_meltdown_spectre}
+
+Transient execution attacks such as Meltdown (CVE-2017-5754)~\cite{lipp2018meltdown}
+and Spectre (CVE-2017-5753, CVE-2017-5715)~\cite{kocher2019spectre} exploit the
+mismatch between architectural state commitment and microarchitectural execution.
+Instructions may execute transiently before their validity is resolved, leaving
+observable side-effects in shared microarchitectural components such as caches.
+
+Three architectural preconditions must hold simultaneously for a transient
+execution attack to be feasible~\cite{kocher2019spectre,intel2018analysis}:
+\begin{enumerate}
+  \item \textbf{Speculative or out-of-order execution:} Instructions execute before
+        architectural checks are resolved, creating a transient execution window.
+  \item \textbf{Shared, timing-observable microarchitectural state:} Typically cache
+        hierarchies that allow data-dependent timing differences to be measured.
+  \item \textbf{Hardware-enforced isolation boundary (attack-class specific):}
+        Required for Meltdown and Spectre Variant~2 to cross privilege or context boundaries.
+\end{enumerate}
+
+\subsubsection*{Current Implementation (Baseline Architecture)}
+
+The current RWU64IMD implementation is a strictly in-order, single-core design
+with no speculative or out-of-order execution. The pipeline executes one instruction
+at a time, and all memory accesses are resolved before subsequent dependent operations
+are issued.
+
+\begin{itemize}
+  \item \textbf{No Speculation:} The absence of speculative or out-of-order execution
+        eliminates the transient execution window required for all Spectre and Meltdown
+        class attacks.
+  \item \textbf{No Isolation Boundary:} The system operates entirely in machine mode
+        without user or supervisor privilege separation, removing the architectural
+        boundary required for Meltdown and Spectre Variant~2.
+  \item \textbf{No Shared Cache Hierarchy:} The baseline design does not include
+        shared caches (e.g., L2), limiting the availability of high-resolution
+        cross-context timing side-channels.
+\end{itemize}
+
+As a result, none of the required preconditions are simultaneously satisfied,
+and therefore Meltdown and Spectre attacks are \textbf{not applicable} in the
+current implementation.
+
+\subsubsection*{Assumed Extended Implementation (Multi-Core and Performance Enhancements)}
+
+Future extensions of the architecture may introduce:
+\begin{itemize}
+  \item Multi-core execution,
+  \item Shared L2 cache,
+  \item Deeper pipelines with speculative execution,
+  \item Branch prediction mechanisms (e.g., BTB, BHT),
+  \item Optional out-of-order execution structures (e.g., ROB).
+\end{itemize}
+
+Under these assumptions, the microarchitectural landscape changes significantly:
+
+\begin{itemize}
+  \item \textbf{Speculative Execution Introduced:} Branch prediction and deeper pipelines
+        create transient execution windows, enabling speculative execution of instructions
+        before branch resolution.
+  \item \textbf{Shared L2 Cache:} A shared cache across cores introduces a measurable
+        timing side-channel. Cache line access latency differences (hit vs. miss) can be
+        observed using the \texttt{rdcycle} CSR, enabling data exfiltration.
+  \item \textbf{Branch Predictor State Sharing:} Predictor structures may be shared or
+        influenceable across execution contexts, enabling mistraining attacks.
+\end{itemize}
+
+\paragraph{Attack Applicability in Extended Design}
+
+\begin{itemize}
+  \item \textbf{Meltdown:} Still not applicable unless hardware-enforced privilege
+        separation (e.g., user/supervisor modes with protected memory regions) and
+        deferred exception handling are introduced.
+  \item \textbf{Spectre Variant 1 (Bounds Check Bypass):} Applicable. Speculative
+        execution combined with data-dependent memory accesses enables leakage within
+        the same address space via cache-based side-channels.
+  \item \textbf{Spectre Variant 2 (Branch Target Injection):} Conditionally applicable.
+        Requires indirect branch prediction structures and cross-context predictor
+        influence, which may arise in multi-core or multi-context environments.
+\end{itemize}
+
+\subsubsection*{Security Interpretation}
+
+The security posture of the RWU64IMD architecture is therefore highly dependent on
+microarchitectural features rather than the ISA itself. The baseline implementation
+achieves inherent resistance to transient execution attacks through architectural
+simplicity, while future performance-oriented extensions introduce conditions under
+which Spectre-class attacks become feasible.
+
+\begin{figure}[H]
+  \centering
+  % Placeholder for speculative execution and cache side-channel diagram
+  \fbox{\parbox[c][5cm][c]{0.8\linewidth}{\centering Placeholder: Transient Execution and Cache Side-Channel Mechanism}}
+  \caption{Conceptual illustration of transient execution and cache-based side-channel leakage}
+  \label{fig:transient_execution_placeholder}
+\end{figure}
+
+The detailed analysis of attack mechanisms and corresponding mitigation strategies
+for both baseline and extended configurations is provided in Chapter~\ref{chap:attacks}.

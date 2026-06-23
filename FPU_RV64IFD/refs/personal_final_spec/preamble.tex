@@ -1,0 +1,54 @@
+% ------------------ Encoding ------------------
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+
+% ------------------ Page Geometry ------------------
+\usepackage[a4paper, margin=1in]{geometry}
+
+% ------------------ Math ------------------
+\usepackage{amsmath, amssymb}
+
+% ------------------ Figures & Tables ------------------
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{ifthen}
+
+% ------------------ Header & Footer ------------------
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\setlength{\headheight}{14.5pt}
+\addtolength{\topmargin}{-2.5pt}
+
+\usepackage{pdfpages}
+
+% Header: Chapter name
+\fancyhead[L]{\nouppercase{\leftmark}}
+
+% Footer: Logo (left) & page number (right)
+\fancyfoot[L]{\includegraphics[height=12pt]{figures/rwu.jpg}}
+\fancyfoot[R]{\thepage}
+
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+% ------------------ Hyperlinks ------------------
+\usepackage[hidelinks]{hyperref}
+
+% ------------------ Lists ------------------
+\usepackage{enumitem}
+
+% ------------------ Better Captions ------------------
+\captionsetup{
+    font=small,
+    labelfont=bf
+}
+
+% ------------------ Glossary ------------------
+\usepackage[acronym]{glossaries}
+\makeglossaries
+
+

@@ -1,0 +1,34 @@
+Interrupt sources are level-based and derived directly from kernel status
+or FIFO fill levels.
+
+Table~\ref{tab:asQspiPer06c} shows the service requests of the QSPI.
+\begin{table}[H]
+\caption{QSPI Service Requests (updated)}
+\label{tab:asQspiPer06c}
+\centering
+\begin{tabularx}{\textwidth}{|l |l |l |X|}
+  \hline
+  Bit & Service Request & IRQ & Explanation \\
+  \hline
+  \hline
+  0 & DONE      & DONE      & Transfer completed (FSM reached DONE state) \\
+  \hline
+  1 & RX\_HALF  & RX\_HALF  & RX FIFO $\geq$ half full \\
+  \hline
+  2 & RX\_EMPTY & RX\_EMPTY & RX FIFO empty \\
+  \hline
+  3 & TX\_HALF  & TX\_HALF  & TX FIFO $\leq$ half full (ready to be refilled) \\
+  \hline
+  4 & TX\_EMPTY & TX\_EMPTY & TX FIFO empty \\
+  \hline
+  5 & ERROR     & ERROR     & Error latched (see STATUS register) \\
+  \hline
+  6 & TIMEOUT   & TIMEOUT   & Timeout threshold reached \\
+  \hline
+  63:7 & -       & -         & Reserved \\
+  \hline
+\end{tabularx}
+\end{table}
+
+In QSPI: \[ \text{MIS} = \text{RIS} \;\&\; \text{IMSC} \]
+and then the external interrupt output is: \[ \text{IRQ} = |\;\text{MIS} \]

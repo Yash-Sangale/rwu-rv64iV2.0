@@ -1,0 +1,37 @@
+\begin{table}[H]
+\caption{QSPI0 Feature Set}
+\label{tab:asQspiPer01a}
+\centering
+\begin{tabularx}{\textwidth}{|l |l |X|}
+  \hline
+   & Generic QSPI Feature Set & Details \\
+  \hline
+  \hline
+  yes & Separate Kernel Clock      & 125\;MHz (TBD) \\
+  \hline
+  yes & FIFO Data Buffering        & RX and TX, each 16 entries $\times$ 64\;bit = 128\;bytes \\
+  \hline
+  yes & Programmable Baud Rate     & $f_{SCK} = f_{kernel} / (2 \times (\text{CLKDIV} + 1))$, CLKDIV\;$\in$\;[0\ldots255] \\
+  \hline
+  yes & Single SPI Mode            & 1-1-1, cmd/adr/data on one wire \\
+  \hline
+  yes & Dual SPI Mode              & 1-1-2, data on two wires (DUAL=1, QUAD=0) \\
+  \hline
+  yes & Quad SPI Mode              & 1-1-4 and 1-4-4, data on four wires (QUAD=1) \\
+  \hline
+  yes & Configurable SPI Mode      & CPOL and CPHA selectable (Mode\;0 and Mode\;3) \\
+  \hline
+  yes & 3-/4-Byte Address          & Selectable via ADDR\_LEN bit \\
+  \hline
+  yes & Execute-In-Place (XIP)     & Auto-read on bus access, fixed opcode from CMD register \\
+  \hline
+  yes & Double Data Rate (DDR)     & DDR bit in CTRL register \\
+  \hline
+  yes & Interrupt Generation       & 7 interrupt sources, maskable via IMSC \\
+  \hline
+  yes & FIFO Flush                 & TX\_FLUSH and RX\_FLUSH bits in CTRL register \\
+  \hline
+  yes & Configurable Timeout       & Timeout counter, threshold set via TIMEOUT register \\
+  \hline
+\end{tabularx}
+\end{table}

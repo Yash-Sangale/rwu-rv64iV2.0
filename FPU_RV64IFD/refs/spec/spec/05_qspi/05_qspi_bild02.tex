@@ -1,0 +1,38 @@
+A simple Moore-FSM (Fig. \ref{fig:asqspi01}): Additional to the FSM, a clock generator for sck\_gen is required. This clock will be enabled or disabled by the FSM (clock enable cell). And more a few counters will be needed: a counter for the CMD-cycles (cnt\_cmd), a counter for the ADDR-cycles (cnt\_adr), a counter for the DUMMY-cycles (cnt\_dum) and a counter for the DATA-cycles (cnt\_dat). The counters end values will be either constants or loaded by a register. When writing to the TX-register a signal tx will be derived, this controls the direction of the data flow in the DATA state of the FSM. 
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[shorten >=1pt,node distance=4cm,on grid,auto] 
+  \node[state with output, accepting, fill=lightgray]		(IDLE)					{ \begin{footnotesize}IDLE\end{footnotesize} 
+																			\nodepart{lower} 
+																			\begin{tiny}$\begin{array}[h]{l} cs=0\\ sck=0 \\ io=ZZZZ \end{array}$\end{tiny} }; 
+  \node[state with output, fill=blue!10]				(CMD) [right=of IDLE]		{ \begin{footnotesize}CMD\_PHASE\end{footnotesize}
+																			\nodepart{lower}
+																			\begin{tiny}$\begin{array}[h]{l} cs=1\\ sck=sck\_gen \\ io=cmd[n] \end{array}$\end{tiny} }; 
+  \node[state with output, fill=blue!10]				(ADDR) [below=of CMD]	{ \begin{footnotesize}ADDR\_PHASE\end{footnotesize}
+																			\nodepart{lower}
+																			\begin{tiny}$\begin{array}[h]{l} cs=1\\ sck=sck\_gen \\ io=adr[n] \end{array}$\end{tiny} }; 
+  \node[state with output, fill=blue!10]				(DUMMY) [below=of ADDR]	{ \begin{footnotesize}DUMMY\_PHASE\end{footnotesize}
+																			\nodepart{lower}
+																			\begin{tiny}$\begin{array}[h]{l} cs=1\\ sck=sck\_gen \\ io=0 \end{array}$\end{tiny} };
+  \node[state with output, fill=blue!10]				(DATA) [left=of DUMMY]	{ \begin{footnotesize}DATA\_PHASE\end{footnotesize}
+																			\nodepart{lower}
+																			\begin{tiny}$\begin{array}[h]{l} cs=1\\ sck=sck\_gen \\ if(tx) io=dato[n] \\ else \; dati[n]=io \end{array}$\end{tiny} };
+  \node[state with output, fill=blue!10]				(DONE) [above=of DATA]	{ \begin{footnotesize}DONE\end{footnotesize}
+																			\nodepart{lower}
+																			\begin{tiny}$\begin{array}[h]{l} cs=0\\ sck=0 \\ io=ZZZZ \end{array}$\end{tiny} };
+  \path[->] 
+	(IDLE)		edge [bend left] node [above]	{\begin{footnotesize}$start\_s=1$\end{footnotesize}}				(CMD)
+				edge [loop above] node			{\begin{footnotesize}$start\_s=0$\end{footnotesize}}				(IDLE)
+	(CMD)		edge node					{\begin{footnotesize}$cnt\_cmd\_s=max\_cmd$\end{footnotesize}}	(ADDR)
+				edge [loop above] node			{\begin{footnotesize}$cnt\_cmd\_s<max\_cmd$\end{footnotesize}}	(CMD)
+	(ADDR)		edge node					{\begin{footnotesize}$cnt\_adr\_s=max\_adr$\end{footnotesize}}		(DUMMY)
+				edge [loop right] node [above]	{\begin{footnotesize}$cnt\_adr\_s<max\_adr$\end{footnotesize}}		(ADDR)
+	(DUMMY)	edge [bend left] node [below]	{\begin{footnotesize}$cnt\_dum\_s=max\_dum$\end{footnotesize}}	(DATA)
+				edge [loop below] node			{\begin{footnotesize}$cnt\_dum\_s<max\_dum$\end{footnotesize}}	(DUMMY)
+	(DATA)		edge node					{\begin{footnotesize}$cnt\_dat\_s=max\_dat$\end{footnotesize}}		(DONE)
+				edge [loop below] node			{\begin{footnotesize}$cnt\_dat\_s<max\_dat$\end{footnotesize}}		(DATA)
+	(DONE)		edge node 					{\begin{footnotesize}$-$\end{footnotesize}}						(IDLE);
+\end{tikzpicture}
+\caption{QSPI Kernel}
+\label{fig:asqspi02}
+\end{figure}

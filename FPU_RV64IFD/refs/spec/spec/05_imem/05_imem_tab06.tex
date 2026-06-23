@@ -1,0 +1,82 @@
+
+Table \ref{tab:asGpioPer06} shows the input and outputs of the GPIO Top.
+\begin{table}[H]
+\caption{GPIO Top I/O}
+\label{tab:asGpioPer06}
+\centering
+\begin{tabularx}{\textwidth}{|l |l |l |X|}
+  \hline
+  Pin & Direction & Width & Explanation \\
+  \hline
+  \hline
+  clk\_i & in & 1 & System clock \\
+  \hline
+  rst\_i & in & 1 & System reset. Active high. \\
+  \hline
+  wbdAddr\_i(3:0) & in & 4 &  From WB-Bus. Peripherals addresses. \\
+  \hline
+  wbdDat\_i(63:0) & in & 64 &  From WB-Bus. Peripherals data input. \\
+  \hline
+  wbdDat\_o(63:0) & out & 64 &  To WB-Bus. Peripherals data output. \\
+  \hline
+  wbdWe\_i & in & 1 &  From WB-Bus. Peripherals write enable. \\
+  \hline
+  wbdSel\_i(7:0) & in & 8 &  From WB-Bus. Peripherals byte select. \\
+  \hline
+  wbdStb\_i & in & 1 &  From WB-Bus. Valid bus cycle.  \\
+  \hline
+  wbdAck\_o & out & 1 &  To WB-Bus. Error free bus transaction.  \\
+  \hline
+  wbdCyc\_i & in & 1 &  From WB-Bus. High for complete bus cycle.  \\
+  \hline
+  gpio\_irq\_o & out & 1 &  GPIO interrupt. \\
+  \hline
+  gpio\_o(7:0) & out & 8 &  To chip pins. GPIO outputs for one block. \\
+  \hline
+  cs\_o & out & 1 &  To chip pins. Chip select for outside GPIO blocks.   \\
+  \hline
+\end{tabularx}
+\end{table}
+
+Table \ref{tab:asGpioPer06a} shows the internals  of the GPIO Top.
+\begin{table}[H]
+\caption{GPIO Top Signals}
+\label{tab:asGpioPer06a}
+\centering
+\begin{tabularx}{\textwidth}{|l |l |X|}
+  \hline
+  Signal & Width & Explanation \\
+  \hline
+  \hline
+  irq\_comb\_s  & 1 & An ORed signal of all interrupts comming from the GPIO kernel. \\
+  \hline
+  irqsc\_comb\_s  & 1 & An ORed signal of all interrupt clear bits from register IRQSC. \\
+  \hline
+  \asgpioIRQSSRegInt  & 64 & GPIO Interrupt Request Source Status Register \asgpioIRQSSRegExt. If irq\_comb\_s = 1, the interrupts from the kernel will be written. Else, if irqsc\_comb\_s = 1, \asgpioIRQSSRegInt will be cleared and irqsc\_reg\_s will be cleared. \\
+  \hline
+  \asgpioIRQSCRegInt  & 64 & GPIO Interrupt Request Source Clear Register \asgpioIRQSCRegExt.  One interrupt request source clear bit is provided for
+each interrupt request source: 0 - No change, 1 - Clear Interrupt source. \\
+  \hline
+  \asgpioIRQSMRegInt  & 64 & GPIO Interrupt Request Source Mask Register \asgpioIRQSMRegExt.  One interrupt request source mask bit is provided for
+each interrupt request source: 0 - Interrupt Request Source Disabled, 1 - Interrupt Request Source Enabled. \\
+  \hline
+  irqsm\_comb\_s  & 1 & An ORed signal of all masked single interrupts comming from the GPIO kernel. \\
+  \hline
+  \asgpioRISRegInt  & 64 & GPIO Raw Interrupt Status Register \asgpioRISRegExt. One interrupt status bit is provided for each service
+request: 0 - No Interrupt, 1 - Interrupt Pending. \\
+  \hline
+  \asgpioISRRegInt  & 64 & GPIO Interrupt Set Register \asgpioISRRegExt. One interrupt set bit is provided for each service request. The interrupt status bits in the \asgpioRISRegExt and the MIS (if IMSC = 1) registers are set by writing a ’1’ to the desired positions.  0 - No change, 1 - Set Interrupt. Reading the register returns 0. \\
+  \hline
+  \asgpioIMSCRegInt  & 64 & GPIO Interrupt Mask Control Register \asgpioIMSCRegExt. One interrupt mask bit is provided for each service request: 0 - Interrupt Disabled, 1 - Interrupt Enabled. \\
+  \hline
+  \asgpioMISRegInt  & 64 & GPIO Masked Interrupt Status Register \asgpioMISRegExt. One interrupt status bit is provided for each service
+request: 0 - No Interrupt, 1 - Interrupt Pending. \\
+  \hline
+  \asgpioIDRegInt  & 64 & GPIO ID Register \asgpioIDRegExt. \\
+  \hline
+  \asgpioDirRegInt  & 64 & GPIO Direction Register \asgpioDirRegExt. \\
+  \hline
+  \asgpioDatRegInt  & 64 & GPIO Data Register \asgpioDatRegExt. If the direction is input, the values from the pad will be written to the register. If the direction is output, the values from the bus will be written to the register. \\
+  \hline
+\end{tabularx}
+\end{table}

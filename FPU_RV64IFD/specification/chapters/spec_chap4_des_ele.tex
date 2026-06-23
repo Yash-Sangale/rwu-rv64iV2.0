@@ -1,0 +1,590 @@
+% ============================================================
+%   CHAPTER 4: Description of the Design Elements
+% ============================================================
+\chapter{Description of the Design Elements}
+\label{chap:design_elements}
+
+\begin{table}[H]
+    \caption{Revision History – Chapter 4}
+    \centering
+    \begin{tabular}{llll}
+        \toprule
+        Version & Date             & Author     & Description                            \\
+        \midrule
+        1.0     & January 22, 2026 & Y. Sangale & Initial Draft                          \\
+        \midrule
+        1.1     & April 21, 2026   & Y. Sangale & Added FPU design element (Section 4.2) \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\textcolor{blue}{\textbf{\textit{This Section will be completed later.}}}
+
+This chapter provides a detailed technical description of all major design
+elements composing the \gls{rv64i} 64-bit single-core microcontroller. Each
+sub-block is presented in terms of hardware interfaces, bus connectivity,
+internal registers, and its functional and structural roles within the
+\gls{SoC}. All diagrams and tables are placeholders for later detailed
+schematics.
+
+% ============================================================
+\section{\gls{cpu} Core}
+
+\subsection{HW Interfaces to Other Blocks}
+The \gls{cpu} Core is the central processing unit of the system, implementing
+the RV64IM instruction set and acting as the single bus master in the
+microcontroller architecture. It connects to all major subsystems as follows:
+\begin{itemize}
+    \item \textbf{Instruction Memory (\gls{I-MEM}):} Connected directly via the \textbf{Instruction Bus (I-Bus)}
+          for program fetch under the \gls{Harvard} architecture model.
+    \item \textbf{Data Memory (\gls{D-MEM}):} Connected directly via the \textbf{Data Bus (D-Bus)} for load/store access.
+    \item \textbf{Wishbone Bus:} Acts as the \textbf{bus master} interfacing to all memory-mapped peripherals
+          (\gls{gpio}, \gls{uart}, \gls{qspi}, Interrupt Controller, and Clock Unit).
+    \item \textbf{Interrupt Input:} Receives a single aggregated interrupt signal from the Vectored Interrupt Controller (VIC).
+    \item \textbf{Clock and Reset:} Driven by the system clock from the Clock Generation Unit (CGU) and
+          synchronized reset signal.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \caption{\gls{cpu} Core interface diagram showing I-Bus, D-Bus, and Wishbone connections to system blocks.}
+    \label{fig:cpu_interface}
+\end{figure}
+
+\subsection{Bus Interface}
+The \gls{cpu} operates as a \textbf{Wishbone Master} for all peripheral
+transactions. It initiates read/write cycles with standard Wishbone control
+signals: \texttt{ADR\_O}, \texttt{DAT\_O}, \texttt{DAT\_I}, \texttt{STB\_O},
+\texttt{ACK\_I}, \texttt{CYC\_O}, and \texttt{WE\_O}. Instruction and data
+memories are accessed directly via the independent I-Bus and D-Bus, each 64-bit
+wide for full datapath utilization.
+
+\begin{figure}[H]
+    \centering
+    \caption{\gls{cpu} bus architecture — direct \gls{Harvard}-style connections to \gls{I-MEM}/\gls{D-MEM} and Wishbone master for peripherals.}
+    \label{fig:cpu_bus_arch}
+\end{figure}
+
+\subsection{Registers}
+The \gls{cpu} core implements 32 × 64-bit general-purpose registers
+(\texttt{x0–x31}) and a 64-bit program counter. Several internal control and
+status registers are included for interrupt and \gls{pipeline} management.
+
+\begin{table}[H]
+    \centering
+    \caption{\gls{cpu} Core Register Summary}
+    \label{tab:cpu_registers}
+    \begin{tabular}{|l|l|}
+        \hline
+        \textbf{Register} & \textbf{Description}                                     \\ \hline
+        \gls{pc}          & 64-bit Program Counter for sequential and branch control \\ \hline
+        IR                & Instruction Register holding current fetched instruction \\ \hline
+        SR                & Status Register with control and flag bits               \\ \hline
+        IBASE             & Base address for interrupt vector table                  \\ \hline
+        MSTATUS           & Machine Status Register (\gls{rv64i} subset)             \\ \hline
+    \end{tabular}
+\end{table}
+
+\subsection{Functional Overview}
+The \gls{cpu} executes instructions using a deterministic scalar \gls{pipeline}
+that supports the \gls{riscv} RV64IM base instruction set. Internally, it
+consists of the following major sub-modules:
+\begin{itemize}
+    \item \textbf{Instruction Decoder:} Decodes opcodes fetched from \gls{I-MEM} and generates control signals for \gls{alu} and memory.
+    \item \textbf{Program Counter (\gls{pc} ):} Maintains the address of the current instruction and computes sequential or branch targets.
+    \item \textbf{\gls{alu}:} Performs arithmetic, logical, shift, and comparison operations; supports integer multiply/divide.
+    \item \textbf{Register File:} Provides two read ports and one write port for operand access and result storage.
+    \item \textbf{Interrupt Input:} Interfaces with VIC to handle asynchronous interrupt requests.
+\end{itemize}
+
+Each instruction is executed in a simple in-order flow without speculation or
+\gls{pipeline} hazards beyond single-cycle stalls.
+
+\begin{figure}[H]
+    \centering
+    \caption{\gls{cpu} Core internal structure showing Instruction Decoder, \gls{alu}, Program Counter, and Register File.}
+    \label{fig:cpu_structure}
+\end{figure}
+
+\subsection{Structural Overview}
+The \gls{cpu} architecture follows a \gls{Harvard} model with:
+\begin{itemize}
+    \item Dedicated instruction path (I-Bus) for fetching 64-bit instructions.
+    \item Dedicated data path (D-Bus) for memory and peripheral data transactions.
+    \item Unified Wishbone interface for peripheral control and configuration.
+\end{itemize}
+
+The internal control path coordinates fetch, decode, execute, and memory
+operations. Instruction flow synchronization ensures deterministic timing
+suitable for embedded applications.
+
+\begin{figure}[H]
+    \centering
+    \caption{Simplified \gls{Harvard} architecture connection of \gls{cpu} to \gls{I-MEM}, \gls{D-MEM}, and Wishbone peripherals.}
+    \label{fig:cpu_harvard_arch}
+\end{figure}
+
+\subsection{Interrupts}
+A single interrupt input line connects to the VIC. The \gls{cpu} jumps to a
+vector address computed as:
+\[
+    \text{ISR Vector} = \text{IBASE} + (\text{\gls{IRQ}\_ID} \times 0x10)
+\]
+Upon completion, control returns to the instruction following the interrupted
+instruction.
+
+\subsection{Clock and Reset}
+The \gls{cpu} operates at an 80\,MHz clock supplied by the CGU. Reset
+initializes the \gls{pc} to 0x0000\_0000, clears all \gls{pipeline} stages, and
+resets the internal status registers.
+
+\subsection{Voltage Class}
+Core operates in the 3.3\,V logic domain.
+
+\section{Floating-Point Unit (FPU)}
+
+\subsection{Introduction}
+This section specifies the Floating-Point Unit (FPU) added to the RV64I\_RWU microcontroller as an integral extension. The FPU implements the RISC-V D-extension (RV64D) and is fully compliant with the IEEE 754-2008 Standard for Floating-Point Arithmetic in double-precision (64-bit) format. The FPU is tightly coupled to the CPU pipeline, sharing the instruction fetch and decode stages, and operates on a dedicated 64-bit floating-point register file (f0–f31) separate from the integer register file.
+
+The FPU is designed for deterministic, in-order execution consistent with the single-pipeline philosophy of the microcontroller. All floating-point operations are performed in hardware with no software emulation fallback. The FPU supports all mandatory IEEE 754-2008 operations, all five rounding modes, and all five floating-point exception flags.
+
+\subsection{Compliance and Standards}
+The FPU is designed to comply with the following standards and specifications:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Standard / Specification} & \textbf{Version / Reference} & \textbf{Compliance Level} \\ \hline
+IEEE 754-2008 & Standard for Floating-Point Arithmetic & Full (double-precision) \\ \hline
+RISC-V Unprivileged ISA & Volume I, D-Extension (RV64D) & Full \\ \hline
+RISC-V Unprivileged ISA & Volume I, F-Extension (RV64F) & Full (subset of D) \\ \hline
+RISC-V Privileged ISA & fcsr register (frm + fflags) & Full \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{Floating-Point Data Formats}
+
+\subsubsection{Double-Precision Format (IEEE 754-2008 binary64)}
+The primary data format supported by the FPU is the 64-bit double-precision binary floating-point format as defined in IEEE 754-2008:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|c|l|}
+\hline
+\textbf{Field} & \textbf{Bits} & \textbf{Description} \\ \hline
+Sign (S) & 1 & 0 = positive, 1 = negative \\ \hline
+Exponent (E) & 11 & Biased exponent, bias = 1023 (0x3FF) \\ \hline
+Mantissa / Fraction (M) & 52 & Fractional part of significand \\ \hline
+Total & 64 & 64-bit double-precision floating-point word \\ \hline
+\end{tabular}
+\end{table}
+
+\subsubsection{Single-Precision Format (IEEE 754-2008 binary32)}
+The FPU also supports single-precision (32-bit) operations as required by the RISC-V F-extension (RV64F).
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|c|l|}
+\hline
+\textbf{Field} & \textbf{Bits} & \textbf{Description} \\ \hline
+Sign (S) & 1 & 0 = positive, 1 = negative \\ \hline
+Exponent (E) & 8 & Biased exponent, bias = 127 (0x7F) \\ \hline
+Mantissa / Fraction (M) & 23 & Fractional part \\ \hline
+Total & 32 & NaN-boxed to 64-bit in FP registers \\ \hline
+\end{tabular}
+\end{table}
+
+\subsubsection{Special Values}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|l|l|}
+\hline
+\textbf{Value} & \textbf{Exponent} & \textbf{Mantissa} & \textbf{Description} \\ \hline
+$\pm$ Zero & 0x000 & 0 & Positive and negative zero \\ \hline
+Subnormal & 0x000 & Non-zero & Gradual underflow \\ \hline
+$\pm$ Infinity & 0x7FF & 0 & Overflow / divide-by-zero \\ \hline
+qNaN & 0x7FF & MSB=1 & Quiet NaN \\ \hline
+sNaN & 0x7FF & MSB=0 & Signalling NaN \\ \hline
+Canonical NaN & 0x7FF & 0x8000000000000 & 0x7FF8000000000000 \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{Floating-Point Register File}
+
+\subsubsection{Register Organization}
+The FPU provides 32 dedicated 64-bit floating-point registers (f0–f31).
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Register} & \textbf{ABI Name} & \textbf{Description} \\ \hline
+f0–f7 & ft0–ft7 & Temporaries \\ \hline
+f8–f9 & fs0–fs1 & Saved \\ \hline
+f10–f11 & fa0–fa1 & Arguments/return \\ \hline
+f12–f17 & fa2–fa7 & Arguments \\ \hline
+f18–f27 & fs2–fs11 & Saved \\ \hline
+f28–f31 & ft8–ft11 & Temporaries \\ \hline
+\end{tabular}
+\end{table}
+
+\subsubsection{Floating-Point Control and Status Register (fcsr)}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|c|c|l|}
+\hline
+\textbf{Field} & \textbf{Bits} & \textbf{CSR} & \textbf{Description} \\ \hline
+NX & 0 & 0x001 & Inexact \\ \hline
+UF & 1 & 0x001 & Underflow \\ \hline
+OF & 2 & 0x001 & Overflow \\ \hline
+DZ & 3 & 0x001 & Divide by Zero \\ \hline
+NV & 4 & 0x001 & Invalid Operation \\ \hline
+frm & [7:5] & 0x002 & Rounding Mode \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{Rounding Modes}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|c|l|l|}
+\hline
+\textbf{Encoding} & \textbf{Mnemonic} & \textbf{IEEE Mode} & \textbf{Description} \\ \hline
+000 & RNE & roundTiesToEven & Default \\ \hline
+001 & RTZ & roundTowardZero & Truncate \\ \hline
+010 & RDN & roundTowardNegative & Floor \\ \hline
+011 & RUP & roundTowardPositive & Ceiling \\ \hline
+100 & RMM & roundTiesToAway & Away from zero \\ \hline
+111 & DYN & -- & Dynamic \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{Exception Handling}
+
+\subsubsection{IEEE 754 Exception Flags}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|c|l|}
+\hline
+\textbf{Exception} & \textbf{Bit} & \textbf{Condition} \\ \hline
+Invalid (NV) & 4 & NaN, invalid ops \\ \hline
+Divide by Zero (DZ) & 3 & Non-zero / 0 \\ \hline
+Overflow (OF) & 2 & Exceeds range \\ \hline
+Underflow (UF) & 1 & Subnormal \\ \hline
+Inexact (NX) & 0 & Rounded \\ \hline
+\end{tabular}
+\end{table}
+
+\subsubsection{Default Results}
+\begin{itemize}
+\item Invalid: Canonical NaN
+\item Divide by Zero: $\pm \infty$
+\item Overflow: $\pm \infty$ or max value
+\item Underflow: Subnormal or zero
+\item Inexact: Rounded result
+\end{itemize}
+
+\subsubsection{Exception Flag Encoding Convention}
+All five exception flags are packed into a single 5-bit vector by every
+arithmetic unit, using a fixed bit order consistent with the \texttt{fflags}
+CSR layout:
+\[
+    \texttt{fflags} = \{\,\text{NV}[4],\ \text{DZ}[3],\ \text{OF}[2],\ \text{UF}[1],\ \text{NX}[0]\,\}
+\]
+Each functional unit drives this vector combinationally as part of its
+result. On instruction commit, the active unit's flag vector is OR-ed
+(sticky-accumulated, per IEEE 754 \S7) into the \texttt{fcsr.fflags} field --
+flags persist across instructions until explicitly cleared by software.
+
+\subsection{Supported Instructions}
+
+\subsubsection{Arithmetic Instructions}
+FADD.D, FSUB.D, FMUL.D, FDIV.D, FSQRT.D, FADD.S, FSUB.S, FMUL.S, FDIV.S, FSQRT.S
+
+\textcolor{blue}{\textbf{\textit{Note: Fused multiply-add instructions
+(FMADD.D, FMSUB.D, FNMADD.D, FNMSUB.D) are not yet implemented in the current
+RTL. No dedicated fused-multiply-add module exists, and \texttt{fpu\_ctrl.sv}
+does not decode these opcodes. They are listed under Future Extensions
+(Section~4.2.14).}}}
+
+\subsubsection{Load/Store}
+FLD, FSD, FLW, FSW
+
+\textcolor{blue}{\textbf{\textit{Note: these instructions bypass the FPU
+arithmetic datapath entirely. They are decoded but routed through the
+standard \gls{D-MEM} load/store path shared with integer loads/stores; only
+the destination register file (integer vs.\ floating-point) differs.}}}
+
+\subsubsection{Comparison}
+FEQ.D, FLT.D, FLE.D, FEQ.S, FLT.S, FLE.S
+
+\subsubsection{Min / Max}
+FMIN.D, FMAX.D, FMIN.S, FMAX.S
+
+\textcolor{blue}{\textbf{\textit{Note: implemented as a dedicated unit
+separate from the arithmetic core (see Section~4.2.8.2), not as part of the
+add/subtract datapath.}}}
+
+\subsubsection{Conversion (Integer $\leftrightarrow$ Floating-Point)}
+FCVT.W.D, FCVT.WU.D, FCVT.L.D, FCVT.LU.D, FCVT.D.W, FCVT.D.WU, FCVT.D.L,
+FCVT.D.LU, and the corresponding single-precision FCVT.*.S / FCVT.S.* variants
+
+\subsubsection{Conversion (Floating-Point $\leftrightarrow$ Floating-Point)}
+FCVT.S.D, FCVT.D.S
+
+\textcolor{blue}{\textbf{\textit{Note: this category was missing from the
+previous revision. It performs precision conversion between single and
+double formats, including NaN-boxing on widen and Guard/Round/Sticky-based
+rounding on narrow.}}}
+
+\subsubsection{Move / Sign-Injection}
+FMV.X.D, FMV.D.X, FMV.X.W, FMV.W.X, FSGNJ.D, FSGNJN.D, FSGNJX.D, FSGNJ.S,
+FSGNJN.S, FSGNJX.S
+
+\textcolor{blue}{\textbf{\textit{Note: the single-precision move variants
+(FMV.X.W, FMV.W.X) and single-precision sign-injection variants were
+implemented but omitted from the previous revision's list.}}}
+
+\subsubsection{Classify}
+FCLASS.D, FCLASS.S
+
+\subsection{FPU Microarchitecture}
+
+\subsubsection{Upcast-Compute-Downcast Methodology}
+Rather than implementing two independent arithmetic datapaths -- one native
+to single precision and one native to double precision -- every arithmetic
+unit (\texttt{fpu\_addsub}, \texttt{fpu\_mul}, \texttt{fpu\_div},
+\texttt{fpu\_sqrt}) implements only the double-precision datapath. A
+single-precision operand is upcast to double precision before entering this
+shared pipeline; the double-precision result is downcast back to single
+precision only when the instruction's format field requests it:
+
+\[
+    \text{S operand}
+    \xrightarrow{\texttt{s\_to\_d()}}
+    \text{D operand}
+    \xrightarrow{\text{shared double-precision pipeline}}
+    \text{D result}
+    \xrightarrow{\texttt{d\_to\_s\_nanbox()}}
+    \text{S result (if format = S)}
+\]
+
+This is IEEE 754-correct, not merely an implementation shortcut: the
+standard defines \texttt{FADD.S} as ``compute the exact mathematical result,
+then round once to single precision.'' Double precision carries 53
+significand bits versus single's 24 -- sufficient headroom to represent the
+exact intermediate result before any rounding occurs. Rounding once, at the
+final downcast step, therefore yields the identical, IEEE-correct result
+that a native single-precision datapath would produce, with no
+double-rounding error.
+
+The \texttt{s\_to\_d}/\texttt{d\_to\_s\_nanbox} conversion functions are
+implemented locally within each of the four arithmetic modules rather than
+factored into a shared module -- a deliberate tradeoff of minor code
+duplication in exchange for fully self-contained, independently verifiable
+units.
+
+\subsubsection{Pipeline Integration}
+Fetch → Decode → FP Execute → Writeback
+
+\subsubsection{Execution Latencies}
+\textcolor{red}{\textbf{Correction from previous revision:}} the FPU does
+not currently implement multi-cycle execution for any operation. All
+eleven functional units (\texttt{fpu\_addsub}, \texttt{fpu\_mul},
+\texttt{fpu\_div}, \texttt{fpu\_sqrt}, \texttt{fpu\_cmp}, \texttt{fpu\_cvt},
+\texttt{fpu\_cvt\_fmt}, \texttt{fpu\_sign}, \texttt{fpu\_minmax},
+\texttt{fpu\_mv}, \texttt{fpu\_classify}) are purely combinational and
+execute within a single clock cycle, alongside the integer \gls{alu}, inside
+the \texttt{EXEC} state of the \texttt{top\_npl} \gls{fsm}.
+
+\begin{table}[H]
+\centering
+\caption{FPU Unit Latency (Current Implementation)}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Unit} & \textbf{Latency} & \textbf{Note} \\ \hline
+fpu\_addsub, fpu\_mul, fpu\_cmp, fpu\_cvt, & 0 cycles & Fully combinational \\
+fpu\_cvt\_fmt, fpu\_sign, fpu\_minmax, & & \\
+fpu\_mv, fpu\_classify & & \\ \hline
+fpu\_div & 0 cycles & Combinational; exposes
+\texttt{clk}/\texttt{valid\_in}/\texttt{valid\_out}/\texttt{ready\_out}
+ports for a future pipelined revision, but \texttt{ready\_out} is hardwired
+high and \texttt{valid\_out = valid\_in \& en} -- no internal state or
+iteration exists today. \\ \hline
+fpu\_sqrt & 0 cycles & Non-restoring bit-by-bit algorithm, unrolled as a
+combinational loop (53 stages) rather than iterated over clock cycles. \\
+\hline
+\end{tabular}
+\end{table}
+
+\textcolor{blue}{\textbf{\textit{Synthesis caveat: the combinational divider
+and square-root units produce a long critical path and are expected to
+require timing closure work (or conversion to a multi-cycle/pipelined
+implementation using the existing handshake ports) for any target above
+simulation. This is a documented, known limitation of the current
+implementation, not an oversight.}}}
+
+A future pipelined revision targeting non-zero latencies (e.g.\ FADD: 3,
+FMUL: 4, FDIV: 20--24, FSQRT: 25--30 cycles) is tracked under Future
+Extensions (Section~4.2.14) and is not part of the current implementation.
+
+\subsubsection{Functional Unit Map}
+The FPU is composed of eleven independently instantiated submodules,
+dispatched from a single combinational control block (\texttt{fpu\_ctrl}).
+All units execute in parallel every cycle; a result multiplexer, driven by
+the decoded opcode, selects the active unit's output.
+
+\begin{table}[H]
+\centering
+\caption{FPU Functional Unit Map}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Module} & \textbf{Instructions Handled} & \textbf{Output Destination} \\ \hline
+fpu\_addsub  & FADD, FSUB                          & FP regfile \\ \hline
+fpu\_mul     & FMUL                                & FP regfile \\ \hline
+fpu\_div     & FDIV                                & FP regfile \\ \hline
+fpu\_sqrt    & FSQRT                               & FP regfile \\ \hline
+fpu\_cmp     & FEQ, FLT, FLE                       & Integer regfile \\ \hline
+fpu\_cvt     & FCVT.* (int $\leftrightarrow$ float) & Integer or FP regfile \\ \hline
+fpu\_cvt\_fmt& FCVT.S.D, FCVT.D.S                  & FP regfile \\ \hline
+fpu\_sign    & FSGNJ, FSGNJN, FSGNJX               & FP regfile \\ \hline
+fpu\_minmax  & FMIN, FMAX                          & FP regfile \\ \hline
+fpu\_mv      & FMV.X.D, FMV.D.X, FMV.X.W, FMV.W.X  & Integer or FP regfile \\ \hline
+fpu\_classify& FCLASS                              & Integer regfile \\ \hline
+\end{tabular}
+\end{table}
+
+The destination register file is selected by the \texttt{to\_int} signal,
+described in Section~4.2.9.
+
+\subsubsection{FP Register File}
+32 × 64-bit, 2 read ports, 1 write port
+
+\subsubsection{Operand Forwarding}
+Supported for single-cycle ops
+
+\subsubsection{NaN Handling}
+IEEE 754 compliant
+
+\subsubsection{Subnormal Handling}
+Fully supported (no flush-to-zero)
+
+\subsection{Hardware Interfaces}
+\textcolor{red}{\textbf{Correction from previous revision:}} the signal
+names listed previously (\texttt{fpu\_op}, \texttt{fpu\_rs1},
+\texttt{fpu\_rs2}, \texttt{fpu\_ready}) do not correspond to the actual
+\texttt{fpu\_top} port list. The real interface is:
+
+\begin{table}[H]
+\centering
+\caption{fpu\_top Port List}
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Signal} & \textbf{Description} \\ \hline
+\texttt{inst} & Decoded instruction enum, shared with the integer decode stage \\ \hline
+\texttt{fp\_funct5} & Sub-operation select field (extracted from the opcode) \\ \hline
+\texttt{fp\_rm} & Rounding mode (resolved from \texttt{fcsr.frm} if dynamic) \\ \hline
+\texttt{fp\_cvt\_toint} & Selects integer-destination conversion direction \\ \hline
+\texttt{fp\_cvt\_word} & Selects 32-bit vs.\ 64-bit integer conversion width \\ \hline
+\texttt{fp\_cvt\_signed} & Selects signed vs.\ unsigned integer conversion \\ \hline
+\texttt{fp\_fmt} & Selects single vs.\ double precision format \\ \hline
+\texttt{fp\_sgn\_op} & Selects FSGNJ / FSGNJN / FSGNJX variant \\ \hline
+\texttt{fp\_min\_sel} & Selects FMIN vs.\ FMAX \\ \hline
+\texttt{operand\_a, operand\_b} & 64-bit floating-point operands \\ \hline
+\texttt{int\_operand} & Integer operand (for int$\to$float conversion) \\ \hline
+\texttt{result} & 64-bit result (floating-point or integer, per \texttt{to\_int}) \\ \hline
+\texttt{to\_int} & Selects integer regfile (1) vs.\ FP regfile (0) as write-back destination \\ \hline
+\texttt{fflags} & 5-bit exception flag vector, see Section~4.2.6 \\ \hline
+\texttt{div\_valid\_in, div\_ready,} & Handshake stub ports for the divider's future pipelined \\
+\texttt{div\_valid\_out} & revision; currently always-ready/combinational (see Section~4.2.8) \\ \hline
+\end{tabular}
+\end{table}
+\subsection{Floating-Point CSR Registers}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|l|c|c|c|l|}
+\hline
+\textbf{Addr} & \textbf{Name} & \textbf{Width} & \textbf{Access} & \textbf{Reset} & \textbf{Description} \\ \hline
+0x001 & fflags & 32 & RW & 0 & Exception flags \\ \hline
+0x002 & frm & 32 & RW & 0 & Rounding mode \\ \hline
+0x003 & fcsr & 32 & RW & 0 & Combined \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{Address Map and Integration}
+FPU is internal, not memory-mapped.
+
+\subsection{Power Considerations}
+Always powered; clock gating planned.
+
+\subsection{Integration with top\_npl}
+The FPU is integrated as a second execution unit running in parallel with
+the integer \gls{alu}, sharing the same decode stage and committing in the
+same cycle.
+
+\begin{itemize}
+    \item \textbf{Shared decode:} the decoded instruction feeds both
+          \texttt{alu\_top} and \texttt{fpu\_top} in the same cycle; no
+          separate FP decode stage exists.
+    \item \textbf{Parallel register file reads:} a dedicated 32$\times$64-bit
+          FP register file is read every cycle alongside the integer
+          register file, both asynchronously, so floating-point operands
+          are available with no additional read latency.
+    \item \textbf{Single-cycle execution:} \texttt{fpu\_top} evaluates
+          combinationally within the \texttt{EXEC} state of the
+          \texttt{top\_npl} \gls{fsm} -- the same cycle used by the integer
+          \gls{alu}.
+    \item \textbf{Write-back routing:} the \texttt{to\_int} signal selects
+          the destination register file via two mutually exclusive
+          write-enable equations:
+\end{itemize}
+
+\begin{verbatim}
+int_we = commit && !trap && reg_write &&
+         (!is_fp || (is_fp && to_int));
+
+fp_we  = commit && !trap && reg_write &&
+         (fp_load || (is_fp && !fp_load && !to_int));
+\end{verbatim}
+
+\begin{itemize}
+    \item \textbf{Load/store bypass:} FLD/FSD are decoded to
+          \texttt{FPU\_SEL\_PASS} in \texttt{fpu\_ctrl} and do not enter the
+          FPU arithmetic datapath; they reuse the same \gls{D-MEM}
+          load/store path as integer loads/stores, differing only in
+          destination register file.
+    \item \textbf{Exception flag accumulation:} on every committed
+          floating-point instruction, the active unit's \texttt{fflags}
+          output is OR-ed into \texttt{fcsr.fflags} (sticky accumulation,
+          per Section~4.2.6).
+\end{itemize}
+
+\subsection{Verification and Test Strategy}
+
+\subsubsection{Unit-Level Simulation}
+SystemVerilog testbenches
+
+\subsubsection{IEEE Compliance Testing}
+Berkeley TestFloat
+
+\subsubsection{Integration Testing}
+RV64I toolchain tests
+
+\subsubsection{Regression Testing}
+CTest framework
+
+\subsection{Future Extensions}
+\begin{itemize}
+\item Fused multiply-add instructions (FMADD.D, FMSUB.D, FNMADD.D, FNMSUB.D) -- not yet implemented
+\item Pipelined/multi-cycle FDIV and FSQRT using the existing handshake ports, targeting the latencies listed in Section~4.2.8
+\item Flush-to-Zero
+\item Quad precision (Q-extension)
+\item Clock gating
+\item Hardware exception trapping
+\item Transcendental functions
+\end{itemize}

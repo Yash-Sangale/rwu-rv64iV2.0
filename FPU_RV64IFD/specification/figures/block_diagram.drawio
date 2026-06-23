@@ -1,0 +1,139 @@
+<mxfile host="65bd71144e">
+    <diagram id="rOBSt2LewtaF4Q59Mz9P" name="Page-1">
+        <mxGraphModel dx="2745" dy="2351" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" background="#ffffff" math="0" shadow="0" adaptiveColors="auto">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="58" value="10" style="rounded=1;whiteSpace=wrap;html=1;textOpacity=0;fillOpacity=0;fontSize=14;fontStyle=1;strokeWidth=8;" vertex="1" parent="1">
+                    <mxGeometry x="-240" y="-400" width="1280" height="1000" as="geometry"/>
+                </mxCell>
+                <mxCell id="45" value="" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=4;dashed=1;fillOpacity=0;fontFamily=Garamond;fontSize=14;fontStyle=1" vertex="1" parent="1">
+                    <mxGeometry x="-40" y="-120" width="880" height="680" as="geometry"/>
+                </mxCell>
+                <mxCell id="32" style="edgeStyle=none;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;strokeWidth=4;shape=flexArrow;startArrow=block;fontFamily=Garamond;fontSize=14;fontStyle=1" edge="1" parent="1" source="2" target="30">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="2" value="CPU&lt;div&gt;Instruction Decoder&lt;/div&gt;&lt;div&gt;ALU (RV64IM)&lt;/div&gt;&lt;div&gt;Register File&lt;/div&gt;&lt;div&gt;Program Counter&lt;/div&gt;&lt;div&gt;Interrupt Input&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=4;fontSize=14;fontFamily=Garamond;fontStyle=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+                    <mxGeometry x="280" y="80" width="200" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="47" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;shape=flexArrow;startArrow=block;strokeWidth=4;fontFamily=Garamond;fontSize=14;fontStyle=1" edge="1" parent="1" source="3" target="27">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" value="Instructoin Memory&lt;br&gt;(64&amp;nbsp;&lt;span style=&quot;color: rgb(63, 63, 63); background-color: transparent;&quot;&gt;KB) SRAM&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=4;fontSize=14;fontFamily=Garamond;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+                    <mxGeometry x="40" y="80" width="120" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="4" value="Data Memory&lt;div&gt;(64 KB) SRAM&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=4;fontSize=14;fontFamily=Garamond;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+                    <mxGeometry x="600" y="80" width="120" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="18" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;startArrow=none;startFill=0;strokeWidth=4;dashed=1;dashPattern=8 8;endArrow=classic;endFill=1;fontFamily=Garamond;fontSize=14;fontStyle=1" edge="1" parent="1" source="8" target="11">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="19" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;startArrow=none;startFill=0;strokeWidth=4;dashed=1;dashPattern=8 8;endArrow=classic;endFill=1;fontFamily=Garamond;fontSize=14;fontStyle=1" edge="1" parent="1" source="8" target="12">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="20" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;startArrow=none;startFill=0;strokeWidth=4;dashed=1;dashPattern=8 8;endArrow=classic;endFill=1;fontFamily=Garamond;fontSize=14;fontStyle=1" edge="1" parent="1" source="8" target="13">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="23" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;dashed=1;dashPattern=8 8;strokeWidth=4;fontFamily=Garamond;fontSize=14;fontStyle=1" edge="1" parent="1" source="8" target="22">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="8" value="WishBone Bus" style="rounded=0;whiteSpace=wrap;html=1;fontSize=14;strokeWidth=4;fontFamily=Garamond;fontStyle=1;fillColor=#f9f7ed;strokeColor=#36393d;" vertex="1" parent="1">
+                    <mxGeometry x="120" y="280" width="520" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="9" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1.007;entryY=0.334;entryDx=0;entryDy=0;entryPerimeter=0;strokeWidth=4;startArrow=classic;startFill=1;shape=flexArrow;fontFamily=Garamond;fontSize=14;fontStyle=1" edge="1" parent="1" source="4" target="2">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="56" value="D BUS" style="edgeLabel;html=1;align=center;verticalAlign=top;resizable=0;points=[];fontSize=14;fontStyle=1;labelBackgroundColor=none;" vertex="1" connectable="0" parent="9">
+                    <mxGeometry x="0.0751" y="2" relative="1" as="geometry">
+                        <mxPoint x="1" y="-2" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="11" value="IQR Controller" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=4;fontSize=14;fontFamily=Garamond;fontStyle=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+                    <mxGeometry x="40" y="400" width="120" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="12" value="UART" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=4;fontSize=14;fontFamily=Garamond;fontStyle=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+                    <mxGeometry x="240" y="400" width="120" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="13" value="QSPI" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=4;fontSize=14;fontFamily=Garamond;fontStyle=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+                    <mxGeometry x="440" y="400" width="120" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="15" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=-0.004;entryY=0.334;entryDx=0;entryDy=0;entryPerimeter=0;strokeWidth=4;startArrow=classic;startFill=1;shape=flexArrow;fontFamily=Garamond;fontSize=14;fontStyle=1" edge="1" parent="1" source="3" target="2">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="55" value="I BUS" style="edgeLabel;html=1;align=center;verticalAlign=top;resizable=0;points=[];fontSize=14;fontStyle=1;labelBackgroundColor=none;" vertex="1" connectable="0" parent="15">
+                    <mxGeometry x="0.0843" y="2" relative="1" as="geometry">
+                        <mxPoint x="-5" y="2" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="16" value="" style="shape=flexArrow;endArrow=classic;startArrow=classic;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;strokeWidth=4;fontFamily=Garamond;fontSize=14;fontStyle=1" edge="1" parent="1" source="8" target="2">
+                    <mxGeometry width="100" height="100" relative="1" as="geometry">
+                        <mxPoint x="370" y="290" as="sourcePoint"/>
+                        <mxPoint x="470" y="190" as="targetPoint"/>
+                        <Array as="points"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="49" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;shape=flexArrow;startArrow=block;startFill=0;strokeWidth=4;fontFamily=Garamond;fontSize=14;fontStyle=1" edge="1" parent="1" source="22">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="920" y="440" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="22" value="GPIO" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=4;fontSize=14;fontFamily=Garamond;fontStyle=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+                    <mxGeometry x="640" y="400" width="120" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="48" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;shape=flexArrow;strokeWidth=4;startArrow=block;fontFamily=Garamond;fontSize=14;fontStyle=1" edge="1" parent="1" source="27">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="-120" y="-40" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="27" value="JTAG &lt;br&gt;(TAP Contoller)" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=4;fontSize=14;fontFamily=Garamond;fontStyle=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+                    <mxGeometry x="40" y="-80" width="120" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="43" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;shape=flexArrow;startArrow=block;strokeWidth=4;fontFamily=Garamond;fontSize=14;fontStyle=1" edge="1" parent="1" source="30">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="380.3333333333335" y="-160" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="30" value="External Bus Controller" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=4;fontSize=14;fontFamily=Garamond;fontStyle=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+                    <mxGeometry x="320" y="-80" width="120" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="34" value="" style="edgeStyle=none;orthogonalLoop=1;jettySize=auto;html=1;shape=flexArrow;endArrow=none;endFill=0;strokeWidth=4;fontFamily=Garamond;fontSize=14;fontStyle=1" edge="1" parent="1">
+                    <mxGeometry width="80" relative="1" as="geometry">
+                        <mxPoint x="200" y="-170" as="sourcePoint"/>
+                        <mxPoint x="560" y="-170" as="targetPoint"/>
+                        <Array as="points"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="57" value="EXTERNAL BUS" style="edgeLabel;html=1;align=center;verticalAlign=bottom;resizable=0;points=[];fontSize=14;fontStyle=1" vertex="1" connectable="0" parent="34">
+                    <mxGeometry x="-0.0007" y="-4" relative="1" as="geometry">
+                        <mxPoint y="-14" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="42" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;shape=flexArrow;startArrow=block;strokeWidth=4;fontFamily=Garamond;fontSize=14;fontStyle=1" edge="1" parent="1" source="35">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="260.3333333333335" y="-180" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="35" value="External&lt;br&gt;Instructoin Memory" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=4;fontSize=14;fontFamily=Garamond;fontStyle=1;fillColor=#b0e3e6;strokeColor=#0e8088;" vertex="1" parent="1">
+                    <mxGeometry x="200" y="-360" width="120" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="38" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;shape=flexArrow;startArrow=block;strokeWidth=4;fontFamily=Garamond;fontSize=14;fontStyle=1" edge="1" parent="1" source="37">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="500.3333333333335" y="-180" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="37" value="External&lt;br&gt;Data Memory" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=4;fontSize=14;fontFamily=Garamond;fontStyle=1;fillColor=#b0e3e6;strokeColor=#0e8088;" vertex="1" parent="1">
+                    <mxGeometry x="440" y="-360" width="120" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="50" value="JTAG PORT" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1;labelBorderColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="-210" y="-55" width="90" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="51" value="GPIO PORT" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1" vertex="1" parent="1">
+                    <mxGeometry x="920" y="425" width="100" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="54" value="RWU64IM" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=3" vertex="1" parent="1">
+                    <mxGeometry x="-40" y="520" width="120" height="40" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

@@ -1,0 +1,103 @@
+\paragraph{Block Architecture} -:
+The block architecture is like:
+\begin{verbatim}
+Wishbone
+   |
+Register File + IRQ Logic (SRB)
+   |
+QSPI Kernel FSM
+   |
+TX FIFO / RX FIFO
+   |
+SPI PHY (SCK / CS / IO[3:0])
+\end{verbatim}
+
+The kernel is fully state-driven and does not depend on external events such as interrupts or bus timing.
+
+Writing bit 0 of \asqspiCtrlRegExt\textbf{.START} initiates a transaction if not busy.
+
+\paragraph{Kernel State Machine} -:
+The kernel operates in the following states:
+
+\begin{itemize}
+  \item IDLE
+  \item CMD\_PHASE
+  \item ADDR\_PHASE
+  \item DUMMY\_PHASE
+  \item DATA\_PHASE
+  \item DONE
+\end{itemize}
+
+State transitions occur only on the internal kernel clock.
+
+\paragraph{Start Semantics:} -:
+A transaction is started by:
+
+\[
+start\_s = (QSPI\_CTRL.START == 1) \land (BUSY == 0)
+\]
+
+The START bit is self-clearing.
+
+\paragraph{START Write while BUSY} -:
+Writing the START bit while BUSY is asserted is a no-operation (NOP):
+the write is silently discarded and no error is raised. This simplifies
+driver implementation (no mandatory pre-check required), but SW is responsible
+for polling BUSY or waiting for the DONE interrupt before initiating a
+new transaction if ordering is required.
+
+The formal start condition remains:
+\[
+  start\_s = (\asqspiCtrlRegExt\textbf{.START} == 1) \land (\asqspiStatusRegExt\textbf{.BUSY} == 0)
+\]
+
+
+\paragraph{Error Conditions} -:
+Errors are latched in \asqspiStatusRegExt\textbf{.ERROR} and \asqspiRISRegExt\textbf{.ERROR}:
+\begin{itemize}
+  \item Illegal command
+  \item FIFO overflow/underflow
+  \item XIP conflict
+  \item Timeout
+\end{itemize}
+Errors persist until cleared via \asqspiICRRegExt.
+
+\paragraph{Execute-In-Place (XIP) Mode} -:
+When the XIP bit in \asqspiCtrlRegExt\ is set, the QSPI controller automatically
+services read requests from the CPU bus without explicit SW intervention.
+
+\begin{itemize}
+  \item XIP is only supported for \emph{read} accesses. Write accesses from the
+    bus while XIP is active are not forwarded to the flash and cause an ERROR.
+  \item The opcode for XIP reads is taken from \asqspiCmdRegExt\textbf{.OPCODE}.
+    SW must configure this register with a suitable read command before
+    enabling XIP (e.g.\ 0x6B for Quad Output Fast Read).
+  \item The number of dummy cycles is taken from \asqspiDummyRegExt\textbf{.DUMMY\_CYC}.
+  \item The ADDR\_LEN, QUAD, DUAL, CPOL, CPHA, and CLKDIV settings apply as
+    configured; these must be stable before XIP is enabled.
+  \item While XIP is active, the START bit is ignored (writing START has no effect).
+  \item XIP is terminated by clearing the XIP bit. The current flash transaction,
+    if any, is completed before the controller returns to IDLE.
+  \item An XIP conflict error is raised when SW attempts to write
+    \asqspiCtrlRegExt\textbf{.START} while XIP is active. This sets the
+    ERROR bit in \asqspiStatusRegExt\ and in \asqspiRISRegExt.
+\end{itemize}
+
+Typical SW sequence to enable XIP:
+\begin{enumerate}
+  \item Configure CLKDIV, CPOL, CPHA, QUAD/DUAL, ADDR\_LEN as needed.
+  \item Write the desired read opcode to \asqspiCmdRegExt.
+  \item Write the required dummy cycles to \asqspiDummyRegExt.
+  \item Set XIP bit in \asqspiCtrlRegExt. XIP becomes active immediately.
+\end{enumerate}
+
+\paragraph{Design Rules} -:
+\begin{itemize}
+  \item The kernel FSM is fully state-driven.
+  \item No FSM state depends on interrupt signals.
+  \item Interrupts never control hardware behavior.
+  \item All external behavior is driven by register state only.
+\end{itemize}
+
+
+Figure \ref{fig:asqspi02} shows the state machine of the QSPI.

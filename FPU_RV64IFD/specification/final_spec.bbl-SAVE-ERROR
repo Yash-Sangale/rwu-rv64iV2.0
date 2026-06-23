@@ -1,0 +1,340 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.3 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \datalist[entry]{none/global//global/global/global}
+    \entry{lipp2018meltdown}{inproceedings}{}{}
+      \name{author}{11}{}{%
+        {{hash=06dadd3dad2de585a3fce14dd5e8f779}{%
+           family={Lipp},
+           familyi={L\bibinitperiod},
+           given={Moritz},
+           giveni={M\bibinitperiod}}}%
+        {{hash=463f3d270ca422b7f257c887efd3eed8}{%
+           family={Schwarz},
+           familyi={S\bibinitperiod},
+           given={Michael},
+           giveni={M\bibinitperiod}}}%
+        {{hash=674bea57e03671a89cb3f84cad730696}{%
+           family={Gruss},
+           familyi={G\bibinitperiod},
+           given={Daniel},
+           giveni={D\bibinitperiod}}}%
+        {{hash=b38d2f646061589c79aab7b15fec7827}{%
+           family={Prescher},
+           familyi={P\bibinitperiod},
+           given={Thomas},
+           giveni={T\bibinitperiod}}}%
+        {{hash=90745f0bee3dd32447e37472dbab6c41}{%
+           family={Haas},
+           familyi={H\bibinitperiod},
+           given={Werner},
+           giveni={W\bibinitperiod}}}%
+        {{hash=eafaecc2266dc244316f657295446434}{%
+           family={Horn},
+           familyi={H\bibinitperiod},
+           given={Jann},
+           giveni={J\bibinitperiod}}}%
+        {{hash=1cdffbc482347edefd718f61814abbc3}{%
+           family={Mangard},
+           familyi={M\bibinitperiod},
+           given={Stefan},
+           giveni={S\bibinitperiod}}}%
+        {{hash=f0a163cdbf4dbde1c36f8457b3e2278e}{%
+           family={Kocher},
+           familyi={K\bibinitperiod},
+           given={Paul},
+           giveni={P\bibinitperiod}}}%
+        {{hash=9b8ddec78ab1bf52f758858ca3928a61}{%
+           family={Genkin},
+           familyi={G\bibinitperiod},
+           given={Daniel},
+           giveni={D\bibinitperiod}}}%
+        {{hash=cd7579fd1f745b58396f5395d38e1a5c}{%
+           family={Yarom},
+           familyi={Y\bibinitperiod},
+           given={Yuval},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=d9528fb2869236a3c4d978220eded42c}{%
+           family={Hamburg},
+           familyi={H\bibinitperiod},
+           given={Mike},
+           giveni={M\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {USENIX Association}%
+      }
+      \strng{namehash}{c5e126d74b4feabda41a322ec7554974}
+      \strng{fullhash}{abc47dd277e8a27cf8cda505118baa33}
+      \strng{fullhashraw}{abc47dd277e8a27cf8cda505118baa33}
+      \strng{bibnamehash}{c5e126d74b4feabda41a322ec7554974}
+      \strng{authorbibnamehash}{c5e126d74b4feabda41a322ec7554974}
+      \strng{authornamehash}{c5e126d74b4feabda41a322ec7554974}
+      \strng{authorfullhash}{abc47dd277e8a27cf8cda505118baa33}
+      \strng{authorfullhashraw}{abc47dd277e8a27cf8cda505118baa33}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{27th USENIX Security Symposium}
+      \field{title}{{Meltdown: Reading Kernel Memory from User Space}}
+      \field{year}{2018}
+      \field{pages}{973\bibrangedash 990}
+      \range{pages}{18}
+    \endentry
+    \entry{kocher2019spectre}{inproceedings}{}{}
+      \name{author}{12}{}{%
+        {{hash=f0a163cdbf4dbde1c36f8457b3e2278e}{%
+           family={Kocher},
+           familyi={K\bibinitperiod},
+           given={Paul},
+           giveni={P\bibinitperiod}}}%
+        {{hash=eafaecc2266dc244316f657295446434}{%
+           family={Horn},
+           familyi={H\bibinitperiod},
+           given={Jann},
+           giveni={J\bibinitperiod}}}%
+        {{hash=2c3fca76329df4410f37919bcd49f3e5}{%
+           family={Fogh},
+           familyi={F\bibinitperiod},
+           given={Anders},
+           giveni={A\bibinitperiod}}}%
+        {{hash=9b8ddec78ab1bf52f758858ca3928a61}{%
+           family={Genkin},
+           familyi={G\bibinitperiod},
+           given={Daniel},
+           giveni={D\bibinitperiod}}}%
+        {{hash=674bea57e03671a89cb3f84cad730696}{%
+           family={Gruss},
+           familyi={G\bibinitperiod},
+           given={Daniel},
+           giveni={D\bibinitperiod}}}%
+        {{hash=90745f0bee3dd32447e37472dbab6c41}{%
+           family={Haas},
+           familyi={H\bibinitperiod},
+           given={Werner},
+           giveni={W\bibinitperiod}}}%
+        {{hash=d9528fb2869236a3c4d978220eded42c}{%
+           family={Hamburg},
+           familyi={H\bibinitperiod},
+           given={Mike},
+           giveni={M\bibinitperiod}}}%
+        {{hash=06dadd3dad2de585a3fce14dd5e8f779}{%
+           family={Lipp},
+           familyi={L\bibinitperiod},
+           given={Moritz},
+           giveni={M\bibinitperiod}}}%
+        {{hash=1cdffbc482347edefd718f61814abbc3}{%
+           family={Mangard},
+           familyi={M\bibinitperiod},
+           given={Stefan},
+           giveni={S\bibinitperiod}}}%
+        {{hash=b38d2f646061589c79aab7b15fec7827}{%
+           family={Prescher},
+           familyi={P\bibinitperiod},
+           given={Thomas},
+           giveni={T\bibinitperiod}}}%
+        {{hash=463f3d270ca422b7f257c887efd3eed8}{%
+           family={Schwarz},
+           familyi={S\bibinitperiod},
+           given={Michael},
+           giveni={M\bibinitperiod}}}%
+        {{hash=cd7579fd1f745b58396f5395d38e1a5c}{%
+           family={Yarom},
+           familyi={Y\bibinitperiod},
+           given={Yuval},
+           giveni={Y\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {IEEE}%
+      }
+      \strng{namehash}{3c1b558b10a44e8a4ecc1e0e195af826}
+      \strng{fullhash}{12dfc67f3836dabc6379f1bfbbcba998}
+      \strng{fullhashraw}{12dfc67f3836dabc6379f1bfbbcba998}
+      \strng{bibnamehash}{3c1b558b10a44e8a4ecc1e0e195af826}
+      \strng{authorbibnamehash}{3c1b558b10a44e8a4ecc1e0e195af826}
+      \strng{authornamehash}{3c1b558b10a44e8a4ecc1e0e195af826}
+      \strng{authorfullhash}{12dfc67f3836dabc6379f1bfbbcba998}
+      \strng{authorfullhashraw}{12dfc67f3836dabc6379f1bfbbcba998}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{40th IEEE Symposium on Security and Privacy}
+      \field{title}{{Spectre Attacks: Exploiting Speculative Execution}}
+      \field{year}{2019}
+      \field{pages}{1\bibrangedash 19}
+      \range{pages}{19}
+    \endentry
+    \entry{intel2018analysis}{report}{}{}
+      \name{author}{1}{}{%
+        {{hash=b7f0fb90e404efb48f8a85a517dec3c9}{%
+           family={{Intel Corporation}},
+           familyi={I\bibinitperiod}}}%
+      }
+      \list{institution}{1}{%
+        {Intel Corporation}%
+      }
+      \strng{namehash}{b7f0fb90e404efb48f8a85a517dec3c9}
+      \strng{fullhash}{b7f0fb90e404efb48f8a85a517dec3c9}
+      \strng{fullhashraw}{b7f0fb90e404efb48f8a85a517dec3c9}
+      \strng{bibnamehash}{b7f0fb90e404efb48f8a85a517dec3c9}
+      \strng{authorbibnamehash}{b7f0fb90e404efb48f8a85a517dec3c9}
+      \strng{authornamehash}{b7f0fb90e404efb48f8a85a517dec3c9}
+      \strng{authorfullhash}{b7f0fb90e404efb48f8a85a517dec3c9}
+      \strng{authorfullhashraw}{b7f0fb90e404efb48f8a85a517dec3c9}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{note}{White Paper, Revision~4.0}
+      \field{title}{{Analysis of Speculative Execution Side Channels}}
+      \field{type}{techreport}
+      \field{year}{2018}
+    \endentry
+    \entry{arm2018cache}{report}{}{}
+      \name{author}{1}{}{%
+        {{hash=d8c59dfa75014dab2a6b898b0ba1b5e9}{%
+           family={{ARM Limited}},
+           familyi={A\bibinitperiod}}}%
+      }
+      \list{institution}{1}{%
+        {ARM Limited}%
+      }
+      \strng{namehash}{d8c59dfa75014dab2a6b898b0ba1b5e9}
+      \strng{fullhash}{d8c59dfa75014dab2a6b898b0ba1b5e9}
+      \strng{fullhashraw}{d8c59dfa75014dab2a6b898b0ba1b5e9}
+      \strng{bibnamehash}{d8c59dfa75014dab2a6b898b0ba1b5e9}
+      \strng{authorbibnamehash}{d8c59dfa75014dab2a6b898b0ba1b5e9}
+      \strng{authornamehash}{d8c59dfa75014dab2a6b898b0ba1b5e9}
+      \strng{authorfullhash}{d8c59dfa75014dab2a6b898b0ba1b5e9}
+      \strng{authorfullhashraw}{d8c59dfa75014dab2a6b898b0ba1b5e9}
+      \field{sortinit}{5}
+      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{note}{Whitepaper, Version~2.4}
+      \field{title}{{Cache Speculation Side-channels}}
+      \field{type}{techreport}
+      \field{year}{2018}
+    \endentry
+    \entry{gruss2016flushflush}{inproceedings}{}{}
+      \name{author}{4}{}{%
+        {{hash=674bea57e03671a89cb3f84cad730696}{%
+           family={Gruss},
+           familyi={G\bibinitperiod},
+           given={Daniel},
+           giveni={D\bibinitperiod}}}%
+        {{hash=32662039a5cc273dc93db7d12c250ef6}{%
+           family={Maurice},
+           familyi={M\bibinitperiod},
+           given={Clémentine},
+           giveni={C\bibinitperiod}}}%
+        {{hash=2c3fca76329df4410f37919bcd49f3e5}{%
+           family={Fogh},
+           familyi={F\bibinitperiod},
+           given={Anders},
+           giveni={A\bibinitperiod}}}%
+        {{hash=1cdffbc482347edefd718f61814abbc3}{%
+           family={Mangard},
+           familyi={M\bibinitperiod},
+           given={Stefan},
+           giveni={S\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Springer}%
+      }
+      \strng{namehash}{854fa78496b043458d9a06a3d7c47b68}
+      \strng{fullhash}{7071a2e61ada29e59d25e38fc4a83b9a}
+      \strng{fullhashraw}{7071a2e61ada29e59d25e38fc4a83b9a}
+      \strng{bibnamehash}{7071a2e61ada29e59d25e38fc4a83b9a}
+      \strng{authorbibnamehash}{7071a2e61ada29e59d25e38fc4a83b9a}
+      \strng{authornamehash}{854fa78496b043458d9a06a3d7c47b68}
+      \strng{authorfullhash}{7071a2e61ada29e59d25e38fc4a83b9a}
+      \strng{authorfullhashraw}{7071a2e61ada29e59d25e38fc4a83b9a}
+      \field{sortinit}{8}
+      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{Detection of Intrusions and Malware, and Vulnerability Assessment (DIMVA)}
+      \field{title}{{Flush+Flush: A Fast and Stealthy Cache Attack}}
+      \field{year}{2016}
+      \field{pages}{279\bibrangedash 299}
+      \range{pages}{21}
+    \endentry
+    \entry{riscv2022zicbom}{report}{}{}
+      \name{author}{1}{}{%
+        {{hash=76d518858c86ed08b75504e5bc4eb749}{%
+           family={{RISC-V International}},
+           familyi={R\bibinitperiod}}}%
+      }
+      \list{institution}{1}{%
+        {RISC-V International}%
+      }
+      \strng{namehash}{76d518858c86ed08b75504e5bc4eb749}
+      \strng{fullhash}{76d518858c86ed08b75504e5bc4eb749}
+      \strng{fullhashraw}{76d518858c86ed08b75504e5bc4eb749}
+      \strng{bibnamehash}{76d518858c86ed08b75504e5bc4eb749}
+      \strng{authorbibnamehash}{76d518858c86ed08b75504e5bc4eb749}
+      \strng{authornamehash}{76d518858c86ed08b75504e5bc4eb749}
+      \strng{authorfullhash}{76d518858c86ed08b75504e5bc4eb749}
+      \strng{authorfullhashraw}{76d518858c86ed08b75504e5bc4eb749}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{note}{Version~1.0}
+      \field{title}{{RISC-V Cache Management Operation ISA Extensions (Zicbom)}}
+      \field{type}{techreport}
+      \field{year}{2022}
+      \true{nocite}
+    \endentry
+    \entry{hauser2010testfloat}{report}{}{}
+      \name{author}{1}{}{%
+        {{hash=0995feedc6f0f57ed677990da8f9a995}{%
+           family={Hauser},
+           familyi={H\bibinitperiod},
+           given={John\bibnamedelima R.},
+           giveni={J\bibinitperiod\bibinitdelim R\bibinitperiod}}}%
+      }
+      \list{institution}{1}{%
+        {UC Berkeley}%
+      }
+      \strng{namehash}{0995feedc6f0f57ed677990da8f9a995}
+      \strng{fullhash}{0995feedc6f0f57ed677990da8f9a995}
+      \strng{fullhashraw}{0995feedc6f0f57ed677990da8f9a995}
+      \strng{bibnamehash}{0995feedc6f0f57ed677990da8f9a995}
+      \strng{authorbibnamehash}{0995feedc6f0f57ed677990da8f9a995}
+      \strng{authornamehash}{0995feedc6f0f57ed677990da8f9a995}
+      \strng{authorfullhash}{0995feedc6f0f57ed677990da8f9a995}
+      \strng{authorfullhashraw}{0995feedc6f0f57ed677990da8f9a995}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{note}{\url{http://www.jhauser.us/arithmetic/TestFloat.html}}
+      \field{title}{{TestFloat: Floating-Point Verification}}
+      \field{type}{techreport}
+      \field{year}{2010}
+      \true{nocite}
+    \endentry
+  \enddatalist
+\endrefsection
+\endinput
+

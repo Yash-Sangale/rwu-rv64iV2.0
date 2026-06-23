@@ -1,0 +1,5 @@
+TEST_NAME=tb_f_regfile
+PASS=11
+FAIL=0
+TOTAL=11
+STATUS=PASS

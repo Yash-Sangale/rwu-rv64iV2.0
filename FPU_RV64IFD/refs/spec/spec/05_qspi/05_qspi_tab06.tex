@@ -1,0 +1,56 @@
+
+Table \ref{tab:asQspiPer06} shows the input and outputs of the QSPI Top.
+\begin{table}[H]
+\caption{QSPI Top I/O}
+\label{tab:asQspiPer06}
+\centering
+\begin{tabularx}{\textwidth}{|l |l |l |X|}
+  \hline
+  Pin & Direction & Width & Explanation \\
+  \hline
+  \hline
+  clk\_i & in & 1 & System clock \\
+  \hline
+  rst\_i & in & 1 & System reset. Active high. \\
+  \hline
+  wbd\_s\_addr\_i(3:0) & in & 4 &  From WB-Bus. Peripherals addresses. \\
+  \hline
+  wbd\_s\_dat\_i(63:0) & in & 64 &  From WB-Bus. Peripherals data input. \\
+  \hline
+  wbd\_s\_dat\_o(63:0) & out & 64 &  To WB-Bus. Peripherals data output. \\
+  \hline
+  wbd\_s\_we\_i & in & 1 &  From WB-Bus. Peripherals write enable. \\
+  \hline
+  wbd\_s\_sel\_i(7:0) & in & 8 &  From WB-Bus. Peripherals byte select. \\
+  \hline
+  wbd\_s\_stb\_i & in & 1 &  From WB-Bus. Valid bus cycle.  \\
+  \hline
+  wbd\_s\_ack\_o & out & 1 &  To WB-Bus. Error free bus transaction.  \\
+  \hline
+  wbd\_s\_cyc\_i & in & 1 &  From WB-Bus. High for complete bus cycle.  \\
+  \hline
+  qspi\_irq\_o & out & 1 &  QSPI interrupt. \\
+  \hline
+  \asqspiData(3:0) & inout & 4 &  To chip pins. QSPI data for NOR-flash. \\
+  \hline
+  \asqspiCS & out & 1 &  To chip pins. Chip select for NOR-flash.   \\
+  \hline
+  \asqspiSCK & out & 1 &  To chip pins. Clock for NOR-flash.   \\
+  \hline
+\end{tabularx}
+\end{table}
+
+Table \ref{tab:asQspiPer06a} shows the internals  of the QSPI Top.
+\begin{table}[H]
+\caption{QSPI Top Signals}
+\label{tab:asQspiPer06a}
+\centering
+\begin{tabularx}{\textwidth}{|l |l |X|}
+  \hline
+  Signal & Width & Explanation \\
+  \hline
+  \hline
+  tbd  & 1 & tbd \\
+  \hline
+\end{tabularx}
+\end{table}

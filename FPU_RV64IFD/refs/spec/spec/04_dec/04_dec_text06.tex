@@ -1,0 +1,38 @@
+The Instruction Decoder operates on 32\,bit instructions and generates all control signals needed for the operation of the CPU.
+
+\paragraph{General Features: }
+\begin{itemize}
+  \item Decodes all instructions of the RV64I:
+  \begin{itemize}
+    \item opcode=3: I-type, loads
+    \item opcode=19: I-type, immediate arithmetics, logic and shift
+    \item opcode=23: U-type, auipc
+    \item opcode=27: I-type, immediate arithmetics, logic and shift (word)
+    \item opcode=35: S-type, stores
+    \item opcode=51: R-type, RV32I
+    \item opcode=55: U-type, lui
+    \item opcode=59: R-type, RV64I
+    \item opcode=99: B-type, all conditional branches
+    \item opcode=103: I-type, jalr
+    \item opcode=111: J-type, jal
+  \end{itemize}
+  \item generates the control signal for the ALU,
+  \item ... for the D-Mem MUX,
+  \item ... for the D-Mem read- and write enable,
+  \item ... for the PC MUX,
+  \item ... for the register A and B output MUXes,
+  \item ... for the register file write enable,
+  \item ... for the branch control,
+  \item ... for the immediate generation selection,
+  \item ... for the jump and branch control in the pipelined version. 
+\end{itemize}
+
+\paragraph{Synchronous Mode: }
+\begin{itemize}
+  \item -
+\end{itemize}
+
+\paragraph{Asynchronous Mode: }
+\begin{itemize}
+  \item -
+\end{itemize}

@@ -1,0 +1,380 @@
+The following list (Table) shows the internal signals of the Instruction Decoder. The table shows the signal name, the width, the driver, the target and a short explanation.
+\begin{itemize}
+  \item Signal: opcode\_i
+  \begin{itemize}
+    \item Width: 7\,bit unsigned
+    \item Source: Instruction from I-Mem.
+    \item Destination: Case statement generating controls\_s and aluSel\_o
+    \item Explanation: 
+    \begin{itemize}
+      \item opcode=3: loads
+      \begin{itemize}
+        \item regWr\_o=1; Write to register file: Yes
+        \item immSrc\_o=3'b000; Instruction format: I-type
+        \item aluSrcB\_o=1; Mux - Second register or immediate: immediate
+        \item aluSrcA\_o=0; Mux - First register or PC: register
+        \item dMemWr\_o=0; Write to D-Mem: No
+        \item dMemRd\_o=1; Read from D-Mem: Yes
+        \item resultSrc\_o=2'b01; Mux (behind D-Mem) - D-Mem-data or PC+4 or ALU-result: D-Mem-data to RegFile
+        \item branch\_s=0; Branch: No
+        \item jump\_s=0; Only for jalr, jal
+        \item aluSel\_o=5'b00000 (ADD)
+      \end{itemize}
+      \item opcode=19: arithmetic immediate
+      \begin{itemize}
+        \item regWr\_o=1; Write to register file: Yes
+        \item immSrc\_o=3'b000; Instruction format: I-type
+        \item aluSrcB\_o=1; Mux - Second register or immediate: immediate
+        \item aluSrcA\_o=0; Mux - First register or PC: register
+        \item dMemWr\_o=0; Write to D-Mem: No
+        \item dMemRd\_o=0; Read from D-Mem: No
+        \item resultSrc\_o=2'b00; Mux (behind D-Mem) - D-Mem-data or PC+4 or ALU-result: ALU-result to RegFile
+        \item branch\_s=0; Branch: No
+        \item jump\_s=0; Only for jalr, jal
+        \item aluSel\_o=various
+      \end{itemize}
+      \item opcode=23: auipc
+      \begin{itemize}
+        \item regWr\_o=1; Write to register file: Yes
+        \item immSrc\_o=3'b100; Instruction format: U-type
+        \item aluSrcB\_o=1; Mux - Second register or immediate: immediate
+        \item aluSrcA\_o=1; Mux - First register or PC: PC
+        \item dMemWr\_o=0; Write to D-Mem: No
+        \item dMemRd\_o=0; Read from D-Mem: No
+        \item resultSrc\_o=2'b00; Mux (behind D-Mem) - D-Mem-data or PC+4 or ALU-result: ALU-result to RegFile
+        \item branch\_s=0; Branch: No
+        \item jump\_s=0; Only for jalr, jal
+        \item aluSel\_o=5'b00000 (ADD)
+      \end{itemize}
+      \item opcode=27: arithmetic immediate (64 bit)
+      \begin{itemize}
+        \item regWr\_o=1; Write to register file: Yes
+        \item immSrc\_o=3'b000; Instruction format: I-type
+        \item aluSrcB\_o=1; Mux - Second register or immediate: immediate
+        \item aluSrcA\_o=0; Mux - First register or PC: register
+        \item dMemWr\_o=0; Write to D-Mem: No
+        \item dMemRd\_o=0; Read from D-Mem: No
+        \item resultSrc\_o=2'b00; Mux (behind D-Mem) - D-Mem-data or PC+4 or ALU-result: ALU-result to RegFile
+        \item branch\_s=0; Branch: No
+        \item jump\_s=0; Only for jalr, jal
+        \item aluSel\_o=various
+      \end{itemize}
+      \item opcode=35: stores
+      \begin{itemize}
+        \item regWr\_o=0; Write to register file: No
+        \item immSrc\_o=3'b001; Instruction format: S-type
+        \item aluSrcB\_o=1; Mux - Second register or immediate: immediate
+        \item aluSrcA\_o=0; Mux - First register or PC: register
+        \item dMemWr\_o=1; Write to D-Mem: Yes
+        \item dMemRd\_o=0; Read from D-Mem: No
+        \item resultSrc\_o=2'b00; Mux (behind D-Mem) - D-Mem-data or PC+4 or ALU-result: ALU-result to RegFile
+        \item branch\_s=0; Branch: No
+        \item jump\_s=0; Only for jalr, jal
+        \item aluSel\_o=5'b00000 (ADD)
+      \end{itemize}
+      \item opcode=51: arithmetic, logic and shifts
+      \begin{itemize}
+        \item regWr\_o=1; Write to register file: Yes
+        \item immSrc\_o=3'bxxx; Instruction format: R-type (don't care)
+        \item aluSrcB\_o=0; Mux - Second register or immediate: register
+        \item aluSrcA\_o=0; Mux - First register or PC: register
+        \item dMemWr\_o=0; Write to D-Mem: No
+        \item dMemRd\_o=0; Read from D-Mem: No
+        \item resultSrc\_o=2'b00; Mux (behind D-Mem) - D-Mem-data or PC+4 or ALU-result: ALU-result to RegFile
+        \item branch\_s=0; Branch: No
+        \item jump\_s=0; Only for jalr, jal
+        \item aluSel\_o=various
+      \end{itemize}
+      \item opcode=55: lui
+      \begin{itemize}
+        \item regWr\_o=1; Write to register file: Yes
+        \item immSrc\_o=3'b100; Instruction format: U-type
+        \item aluSrcB\_o=1; Mux - Second register or immediate: immediate
+        \item aluSrcA\_o=0; Mux - First register or PC: register
+        \item dMemWr\_o=0; Write to D-Mem: No
+        \item dMemRd\_o=0; Read from D-Mem: No
+        \item resultSrc\_o=2'b00; Mux (behind D-Mem) - D-Mem-data or PC+4 or ALU-result: ALU-result to RegFile
+        \item branch\_s=0; Branch: No
+        \item jump\_s=0; Only for jalr, jal
+        \item aluSel\_o=5'b00000 (ADD)
+      \end{itemize}
+      \item opcode=59: arithmetic, logic and shifts (64 bit)
+      \begin{itemize}
+        \item regWr\_o=1; Write to register file: Yes
+        \item immSrc\_o=3'bxxx; Instruction format: R-type (don't care)
+        \item aluSrcB\_o=0; Mux - Second register or immediate: register
+        \item aluSrcA\_o=0; Mux - First register or PC: register
+        \item dMemWr\_o=0; Write to D-Mem: No
+        \item dMemRd\_o=0; Read from D-Mem: No
+        \item resultSrc\_o=2'b00; Mux (behind D-Mem) - D-Mem-data or PC+4 or ALU-result: ALU-result to RegFile
+        \item branch\_s=0; Branch: No
+        \item jump\_s=0; Only for jalr, jal
+        \item aluSel\_o=various
+      \end{itemize}
+      \item opcode=99: branches
+      \begin{itemize}
+        \item regWr\_o=0; Write to register file: No
+        \item immSrc\_o=3'bxxx; Instruction format: B-type
+        \item aluSrcB\_o=0; Mux - Second register or immediate: register
+        \item aluSrcA\_o=0; Mux - First register or PC: register
+        \item dMemWr\_o=0; Write to D-Mem: No
+        \item dMemRd\_o=0; Read from D-Mem: No
+        \item resultSrc\_o=2'b00; Mux (behind D-Mem) - D-Mem-data or PC+4 or ALU-result: ALU-result to RegFile
+        \item branch\_s=1; Branch: Yes
+        \item jump\_s=0; Only for jalr, jal
+        \item aluSel\_o=various
+      \end{itemize}
+      \item opcode=103: jalr
+      \begin{itemize}
+        \item regWr\_o=1; Write to register file: Yes
+        \item immSrc\_o=3'b000; Instruction format: I-type
+        \item aluSrcB\_o=1; Mux - Second register or immediate: immediate
+        \item aluSrcA\_o=0; Mux - First register or PC: register
+        \item dMemWr\_o=0; Write to D-Mem: No
+        \item dMemRd\_o=0; Read from D-Mem: No
+        \item resultSrc\_o=2'b10; Mux (behind D-Mem) - D-Mem-data or PC+4 or ALU-result: PC+4 to RegFile
+        \item branch\_s=0; Branch: No
+        \item jump\_s=1; Only for jalr, jal
+        \item aluSel\_o=5'b00000 (ADD)
+      \end{itemize}
+      \item opcode=111: jal
+      \begin{itemize}
+        \item regWr\_o=1; Write to register file: Yes
+        \item immSrc\_o=3'b011; Instruction format: J-type
+        \item aluSrcB\_o=0; Mux - Second register or immediate: register
+        \item aluSrcA\_o=0; Mux - First register or PC: register
+        \item dMemWr\_o=0; Write to D-Mem: No
+        \item dMemRd\_o=0; Read from D-Mem: No
+        \item resultSrc\_o=2'b10; Mux (behind D-Mem) - D-Mem-data or PC+4 or ALU-result: PC+4 to RegFile
+        \item branch\_s=0; Branch: No
+        \item jump\_s=1; Only for jalr, jal
+        \item aluSel\_o=5'b00000 (ADD)
+      \end{itemize}
+    \end{itemize}
+  \end{itemize}
+  \item Signal: func3\_i
+  \begin{itemize}
+    \item Width: 3\,bit, unsigned
+    \item Source: Instruction from I-Mem.
+    \item Destination: Case statement generating controls\_s and aluSel\_o
+    \item Explanation: 
+    \begin{itemize}
+      \item opcode=19
+      \begin{itemize}
+        \item func3\_i=0: if(func7b5\_i \& opcode\_i[5]) aluSel\_o=5'b00001 (SUBI) else aluSel\_o=5'b00000 (ADDI)
+        \item func3\_i=1: aluSel\_o=5'b01111 (SLLI)
+        \item func3\_i=2: aluSel\_o=5'b00101 (SLTI)
+        \item func3\_i=3: aluSel\_o=5'b00110 (SLTIU)
+        \item func3\_i=5: if(func7b5\_i == 0) aluSel\_o=5'b01110 (SRLI) else aluSel\_o=5'b01101 (SRAI)
+        \item func3\_i=4: aluSel\_o=5'b00100 (XORI)
+        \item func3\_i=6: aluSel\_o=5'b00011 (ORI)
+        \item func3\_i=7: aluSel\_o=5'b00010 (ANDI)
+      \end{itemize}
+      \item opcode=27
+      \begin{itemize}
+        \item func3\_i=0: if(func7b5\_i \& opcode\_i[5]) aluSel\_o=5'b01011 (SUBIW) else aluSel\_o=5'b01100 (ADDIW)
+        \item func3\_i=1: aluSel\_o=5'b01010 (SLLIW)
+        \item func3\_i=5: if(func7b5\_i == 0) aluSel\_o=5'b01001 (SRLIW) else aluSel\_o=5'b01000 (SRAIW)
+      \end{itemize}
+      \item opcode=51
+      \begin{itemize}
+        \item func3\_i=0: if(func7b5\_i \& opcode\_i[5]) aluSel\_o=5'b00001 (SUB) else aluSel\_o=5'b00000 (ADD)
+        \item func3\_i=1: aluSel\_o=5'b01111 (SLL)
+        \item func3\_i=2: aluSel\_o=5'b00101 (SLT)
+        \item func3\_i=3: aluSel\_o=5'b00110 (SLTU)
+        \item func3\_i=5: if(func7b5\_i == 0) aluSel\_o=5'b01110 (SRL) else aluSel\_o=5'b01101 (SRA)
+        \item func3\_i=4: aluSel\_o=5'b00100 (XOR)
+        \item func3\_i=6: aluSel\_o=5'b00011 (OR)
+        \item func3\_i=7: aluSel\_o=5'b00010 (AND)
+      \end{itemize}
+      \item opcode=59
+      \begin{itemize}
+        \item func3\_i=0: if(func7b5\_i \& opcode\_i[5]) aluSel\_o=5'b01011 (SUBW) else aluSel\_o=5'b01100 (ADDW)
+        \item func3\_i=1: aluSel\_o=5'b01010 (SLLW)
+        \item func3\_i=5: if(func7b5\_i == 0) aluSel\_o=5'b01001 (SRLW) else aluSel\_o=5'b01000 (SRAW)
+      \end{itemize}
+      \item opcode=99
+      \begin{itemize}
+        \item func3\_i=0: aluSel\_o=5'b10001 (BEQ, SUB)
+        \item func3\_i=1: aluSel\_o=5'b10011 (BNE, SUB)
+        \item func3\_i=4: aluSel\_o=5'b10000 (BLT, <)
+        \item func3\_i=5: aluSel\_o=5'b10010 (BGE, >=)
+        \item func3\_i=6: aluSel\_o=5'b10100 (BLTU, <)
+        \item func3\_i=7: aluSel\_o=5'b10101 (BGEU, >=)
+      \end{itemize}
+    \end{itemize}
+  \end{itemize}
+  \item Signal: func7b5\_i
+  \begin{itemize}
+    \item Width: 1\,bit, unsigned
+    \item Source: Instruction from I-Mem.
+    \item Destination: Case statement generating controls\_s and aluSel\_o, rTypeSubtract\_s
+    \item Explanation: Differentiates between ADD and SUB, shift variants
+  \end{itemize}
+  \item Signal: zero\_i
+  \begin{itemize}
+    \item Width: 1\,bit, unsigned
+    \item Source: ALU
+    \item Destination: zero\_s
+    \item Explanation: Indicates that a branch should be taken.
+  \end{itemize}
+  \item Signal: zero\_s
+  \begin{itemize}
+    \item Width: 1\,bit, unsigned
+    \item Source: zero\_i
+    \item Destination: PCSrc\_o
+    \item Explanation: Indicates that a branch should be taken. \[ PCSrc\_o=(branch\_s \& zero\_s) | jump\_s \]
+  \end{itemize}
+  \item Signal: branch\_s
+  \begin{itemize}
+    \item Width: 1\,bit, unsigned
+    \item Source: generated from different instructions, see opcode\_i
+    \item Destination: PCSrc\_o
+    \item Explanation: Indicates that a branch should be taken. \[ PCSrc\_o=(branch\_s \& zero\_s) | jump\_s \]
+  \end{itemize}
+  \item Signal: jump\_s
+  \begin{itemize}
+    \item Width: 1\,bit, unsigned
+    \item Source: generated from different instructions, see opcode\_i
+    \item Destination: PCSrc\_o
+    \item Explanation: Indicates that a branch should be taken. \[ PCSrc\_o=(branch\_s \& zero\_s) | jump\_s \]
+  \end{itemize}
+  \item Signal: rTypeSubtract\_s
+  \begin{itemize}
+    \item Width: 1\,bit, unsigned
+    \item Source: \[ rTypeSubtract\_s = func7b5\_i \& opcode\_i[5] \]
+    \item Destination: Case statement generating controls\_s and aluSel\_o
+    \item Explanation: Short form for distinguishing between ADD AND SUB.
+  \end{itemize}
+  \item Signal: resultSrc\_o
+  \begin{itemize}
+    \item Width: 2\,bit, unsigned
+    \item Source: generated from different instructions, see opcode\_i
+    \item Destination: Mux behind D-Mem
+    \item Explanation: 
+                                        \[ \begin{array}{ll}
+                                               $00$ & \mbox{for ALU-result to RegFile} \\
+                                               $01$ & \mbox{for D-Mem-data to regFile} \\
+                                               $10$ & \mbox{for PC+4 to RegFile}
+                                            \end{array} \]
+  \end{itemize}
+  \item Signal: dMemWr\_o
+  \begin{itemize}
+    \item Width: 1\,bit, unsigned
+    \item Source: generated from different instructions, see opcode\_i
+    \item Destination: D-Mem
+    \item Explanation: Write-enable for D-Mem
+  \end{itemize}
+  \item Signal: dMemRd\_o
+  \begin{itemize}
+    \item Width: 1\,bit, unsigned
+    \item Source: generated from different instructions, see opcode\_i
+    \item Destination: D-Mem
+    \item Explanation: Read-enable for D-Mem; check if realy needed
+  \end{itemize}
+  \item Signal: PCSrc\_o
+  \begin{itemize}
+    \item Width: 1\,bit, unsigned
+    \item Source: \[ PCSrc\_o=(branch\_s \& zero\_s) | jump\_s \]
+    \item Destination: PC
+    \item Explanation: Select input for the PC MUX. \[ \begin{array}{ll} 
+                                                                                                        0 \Rightarrow & $PC+4$ \mbox{ (PCp4) to PC} \\ 
+                                                                                                        1 \Rightarrow & \mbox{branch target address (PCbr) to PC} 
+                                                                                                      \end{array} \]
+  \end{itemize}
+  \item Signal: aluSrcB\_o
+  \begin{itemize}
+    \item Width: 1\,bit, unsigned
+    \item Source: generated from different instructions, see opcode\_i
+    \item Destination: Select input for the MUX between RegFile and ALU
+    \item Explanation: \[ \begin{array}{ll} 
+                                              0 \Rightarrow & \mbox{2nd RegFile output to 2nd source input of ALU} \\ 
+                                              1 \Rightarrow & \mbox{immediate value to 2nd source input of ALU} 
+                                              \end{array} \]
+  \end{itemize}
+  \item Signal: aluSrcA\_o
+  \begin{itemize}
+    \item Width: 1\,bit, unsigned
+    \item Source: generated from different instructions, see opcode\_i
+    \item Destination: Select input for the MUX between RegFile and ALU
+    \item Explanation: \[ \begin{array}{ll} 
+                                              0 \Rightarrow & \mbox{1st RegFile output to 1st source input of ALU} \\ 
+                                              1 \Rightarrow & \mbox{PC to 1st source input of ALU} 
+                                              \end{array} \]
+  \end{itemize}
+  \item Signal: regWr\_o
+  \begin{itemize}
+    \item Width: 1\,bit, unsigned
+    \item Source: generated from different instructions, see opcode\_i
+    \item Destination: Write enable for the RegFile
+    \item Explanation: Write enable for the RegFile
+  \end{itemize}
+  \item Signal: jump\_o
+  \begin{itemize}
+    \item Width: 1\,bit, unsigned
+    \item Source: \[ jump\_o = jump\_s \& (\sim immSrc\_o[0]) \& (\sim immSrc\_o[1]) \& (\sim immSrc\_o[2]) \]
+    \item Destination: Select input for the MUX in front of the branch target adder
+    \item Explanation: \[ \begin{array}{ll} 
+                                              0 \Rightarrow & \mbox{PC to adder input A} \\ 
+                                              1 \Rightarrow & \mbox{regA to adder input A} 
+                                              \end{array} \]
+  \end{itemize}
+  \item Signal: immSrc\_o
+  \begin{itemize}
+    \item Width: 3\,bit, unsigned
+    \item Source: generated from different instructions, see opcode\_i
+    \item Destination: Immediate generator control
+    \item Explanation: \[ \begin{array}{ll} 
+                                              000 \Rightarrow & \mbox{I-type} \\ 
+                                              001 \Rightarrow & \mbox{S-type} \\ 
+                                              010 \Rightarrow & \mbox{B-type} \\ 
+                                              011 \Rightarrow & \mbox{J-type} \\ 
+                                              100 \Rightarrow & \mbox{U-type} 
+                                              \end{array} \]
+  \end{itemize}
+  \item Signal: aluSel\_o
+  \begin{itemize}
+    \item Width: 5\,bit, unsigned
+    \item Source: generated from different instructions, see opcode\_i
+    \item Destination: ALU control
+    \item Explanation: \[ \begin{array}{ll} 
+                                              00000 \Rightarrow & \mbox{ADD, ADDI, (JAL, JALR, AUIPC, LUI, stores, loads)} \\ 
+                                              00001 \Rightarrow & \mbox{SUB, SUBI} \\ 
+                                              00010 \Rightarrow & \mbox{AND, ANDI} \\ 
+                                              00011 \Rightarrow & \mbox{OR, ORI} \\ 
+                                              00100 \Rightarrow & \mbox{XOR, XORI} \\ 
+                                              00101 \Rightarrow & \mbox{SLT, SLTI} \\ 
+                                              00110 \Rightarrow & \mbox{SLTU, SLTIU} \\ 
+                                              00111 \Rightarrow & \mbox{tbd} \\ 
+                                              01000 \Rightarrow & \mbox{SRAW, SRAIW} \\ 
+                                              01001 \Rightarrow & \mbox{SRLW, SRLIW} \\ 
+                                              01010 \Rightarrow & \mbox{SLLW, SLLIW} \\ 
+                                              01011 \Rightarrow & \mbox{SUBW, SUBIW} \\ 
+                                              01100 \Rightarrow & \mbox{ADDW, ADDIW} \\ 
+                                              01101 \Rightarrow & \mbox{SRA, SRAI} \\ 
+                                              01110 \Rightarrow & \mbox{SRL, SRLI} \\ 
+                                              01111 \Rightarrow & \mbox{SLL, SLLI} \\ 
+                                              10000 \Rightarrow & \mbox{BLT} \\ 
+                                              10001 \Rightarrow & \mbox{BEQ} \\ 
+                                              10010 \Rightarrow & \mbox{BGE} \\ 
+                                              10011 \Rightarrow & \mbox{BNE} \\ 
+                                              10100 \Rightarrow & \mbox{BLTU} \\ 
+                                              10101 \Rightarrow & \mbox{BGEU}
+                                              \end{array} \]
+  \end{itemize}
+  \item Signal: branch\_s\_o
+  \begin{itemize}
+    \item Width: 1\,bit, unsigned
+    \item Source: branch\_s
+    \item Destination: Branch control for a pipelined solution
+    \item Explanation: pipeline solution only
+  \end{itemize}
+  \item Signal: jump\_s\_o
+  \begin{itemize}
+    \item Width: 1\,bit, unsigned
+    \item Source: jump\_s
+    \item Destination: Branch control for a pipelined solution
+    \item Explanation: pipeline solution only
+  \end{itemize}
+  
+\end{itemize}

@@ -1,0 +1,32 @@
+\begin{table}[H]
+\caption{Register List of Module GPIO0}
+\label{tab:asGpioPer03}
+\centering
+\begin{tabularx}{\textwidth}{|l |l |X|}
+  \hline
+  Register Name(s) & Name used in module & Comment \\
+  in Chip & register description & Comment \\
+  \hline
+  \hline
+  \asgpioIDRegExt & \asgpioIDRegInt & ID of GPIO0 peripheral \\
+  \hline
+  \asgpioDirRegExt & \asgpioDirRegInt & Direction of the GPIO: \begin{itemize} \item dir\_reg\_s[i] = 0 -> output, \item dir\_reg\_s[i] = 1 -> input \end{itemize} \\
+  \hline
+  \asgpioDatRegExt & \asgpioDatRegInt & Data driven to the GPIO or received from the GPIO. \\
+  \hline
+  \asgpioIRQSSRegExt & \asgpioIRQSSRegInt & GPIO Interrupt Request Source Status Register \\
+  \hline
+  \asgpioIRQSCRegExt & \asgpioIRQSCRegInt & GPIO Interrupt Request Source Clear Register \\
+  \hline
+  \asgpioIRQSMRegExt & \asgpioIRQSMRegInt & GPIO Interrupt Request Source Mask Register \\
+  \hline
+  \asgpioISRRegExt & \asgpioISRRegInt & GPIO Interrupt Set Register \\
+  \hline
+  \asgpioRISRegExt & \asgpioRISRegInt & GPIO Raw Interrupt Status Register \\
+  \hline
+  \asgpioIMSCRegExt & \asgpioIMSCRegInt & GPIO Interrupt Mask Control Register \\
+  \hline
+  \asgpioMISRegExt & \asgpioMISRegInt & GPIO Masked Interrupt Status Register \\
+  \hline
+\end{tabularx}
+\end{table}

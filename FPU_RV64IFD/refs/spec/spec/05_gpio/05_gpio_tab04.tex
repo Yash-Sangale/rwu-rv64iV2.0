@@ -1,0 +1,33 @@
+
+Table \ref{tab:asGpioPer04a} shows the input and outputs of the GPIO kernel.
+\begin{table}[H]
+\caption{GPIO Kernel I/O}
+\label{tab:asGpioPer04a}
+\centering
+\begin{tabularx}{\textwidth}{|l |l |l |X|}
+  \hline
+  Pin & Direction & Width & Explanation \\
+  \hline
+  \hline
+  clk\_i & in & 1 & System clock \\
+  \hline
+  rst\_i & in & 1 & System reset. Active high. \\
+  \hline
+  direction\_i(7:0) & in & 8 & From GPIO-BPI (\asgpioDirRegExt register). Defines the direction of each GPIO. If the bit is 0, the GPIO is an output, if the bit is 1, the GPIO is an input. \\
+  \hline
+  addr\_i(3:0) & in & 4 & From GPIO-BPI. Address for storing cs\_s. \\
+  \hline
+  data\_i(7:0) & in & 8 &  From GPIO-BPI (\asgpioDatRegExt register). GPIO data in output direction. The elements of the register will be forwarded to a tristate buffer which is active when direction is output and 'Z' when direction is input. \\
+  \hline
+  data\_o(7:0) & out & 8 &  From pad to GPIO-BPI (\asgpioDatRegExt register). GPIO data in input direction. If the direction is input, the signals from the pads will go through a tristate buffer and will be forwarded to the register. Else, a '0' will be driven. \\
+  \hline
+  irq\_o(7:0) & out & 8 &  From kernel to GPIO-BPI. A change of an input will be detected and send to the IRQ register. Every possible GPIO input will be routed to an edge detector (both, rising and falling). Those detected edges will be forwarded to the IRQ structure in the BPI. \\
+  \hline
+  en\_i & in & 1 &  From GPIO-BPI. Enables a write to a GPIO block. It stores the chip select cs\_o.\\
+  \hline
+  gpio\_io & bidi & 8 &  To inout pins. GPIO inout. \\
+  \hline
+  cs\_o & out & 1 &  To output pins. Chip select for outside GPIO block. Stored in an internal register (so, synchronized to the data).  \\
+  \hline
+\end{tabularx}
+\end{table}

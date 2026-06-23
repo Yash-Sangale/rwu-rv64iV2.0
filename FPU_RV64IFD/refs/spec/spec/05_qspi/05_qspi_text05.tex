@@ -1,0 +1,98 @@
+The QSPI controller is a memory-mapped peripheral providing high-speed SPI and Quad-SPI access to external flash devices.
+
+The controller is accessed via a 64-bit Wishbone slave interface (dummy citation \cite{lehm}).
+
+\paragraph{General Features: }
+\begin{itemize}
+  \item Single, Dual, and Quad SPI modes
+  \item Configurable dummy cycles
+  \item Programmable baud rate
+  \item TX and RX FIFOs
+  \item Interrupt generation
+  \item Optional Execute-In-Place (XIP)
+\end{itemize}
+
+\paragraph{Synchronous Mode: }
+\begin{itemize}
+  \item 4 data bits
+\end{itemize}
+
+\paragraph{Asynchronous Mode: }
+\begin{itemize}
+  \item -
+\end{itemize}
+
+\subsubsection{Reference Flash Devices}
+
+The QSPI controller is designed to be compatible with widely used NOR-Flash devices.
+Table~\ref{tab:asQspiFlashRef} shows the relevant operating parameters for two
+representative devices. All register default values in this specification are
+set to match the Winbond W25Q128JV in standard (non-DDR) mode with CPOL=0, CPHA=0.
+
+\begin{table}[H]
+\caption{Reference NOR-Flash Devices}
+\label{tab:asQspiFlashRef}
+\centering
+\begin{tabularx}{\textwidth}{|l |X |X |X|}
+  \hline
+  Parameter & Winbond W25Q128JV & Micron MT25QL128 & Comment \\
+  \hline
+  \hline
+  Capacity              & 128\;Mbit (16\;MByte)  & 128\;Mbit (16\;MByte)  & \\
+  \hline
+  Supply Voltage        & 2.7\;V\ldots3.6\;V     & 2.7\;V\ldots3.6\;V     & \\
+  \hline
+  SPI Modes supported   & Mode\;0 (CPOL=0, CPHA=0) and Mode\;3 (CPOL=1, CPHA=1)
+                        & Mode\;0 (CPOL=0, CPHA=0) and Mode\;3 (CPOL=1, CPHA=1) & \\
+  \hline
+  Max. clock (STR)      & 133\;MHz (Quad)         & 133\;MHz (Quad)         & \\
+  \hline
+  Default address width & 3\;Byte (24\;bit)       & 3\;Byte (24\;bit)       & 4-Byte mode selectable \\
+  \hline
+  Quad enable           & QE bit in Status Reg\;2 & via Enhanced Volatile Config Reg (0x61) & Must be set before QUAD=1 \\
+  \hline
+  \multicolumn{4}{|l|}{Relevant Read Opcodes:} \\
+  \hline
+  Read (slow)           & 0x03 (1-1-1, 0 dummy)  & 0x03 (1-1-1, 0 dummy)  & $\leq$50\;MHz \\
+  \hline
+  Fast Read             & 0x0B (1-1-1, 8 dummy)  & 0x0B (1-1-1, 8 dummy)  & up to 133\;MHz \\
+  \hline
+  Dual Output Read      & 0x3B (1-1-2, 8 dummy)  & 0x3B (1-1-2, 8 dummy)  & DUAL=1 \\
+  \hline
+  Quad Output Read      & 0x6B (1-1-4, 8 dummy)  & 0x6B (1-1-4, 8 dummy)  & QUAD=1 \\
+  \hline
+  Quad I/O Read         & 0xEB (1-4-4, 6+2 dummy)& 0xEB (1-4-4, 10 dummy) & QUAD=1, fast \\
+  \hline
+  \multicolumn{4}{|l|}{Relevant Write / Control Opcodes:} \\
+  \hline
+  Write Enable          & 0x06                   & 0x06                   & Required before program/erase \\
+  \hline
+  Page Program          & 0x02 (1-1-1)           & 0x02 (1-1-1)           & Up to 256\;Byte \\
+  \hline
+  Sector Erase (4\;KB)  & 0x20                   & 0x20                   & \\
+  \hline
+  Block Erase (64\;KB)  & 0xD8                   & 0xD8                   & \\
+  \hline
+  Chip Erase            & 0xC7 / 0x60            & 0xC7 / 0x60            & \\
+  \hline
+  JEDEC ID Read         & 0x9F                   & 0x9F                   & Returns 3\;Byte \\
+  \hline
+  JEDEC Manufacturer ID & 0xEF (Winbond)         & 0x20 (Micron)          & \\
+  \hline
+  \multicolumn{4}{|l|}{Typical Dummy Cycles by Mode and Clock:} \\
+  \hline
+  1-1-1 Fast Read       & 8 cycles               & 8 cycles               & \asqspiDummyRegExt = 0x08 \\
+  \hline
+  1-1-4 Quad Output     & 8 cycles               & 8 cycles               & \asqspiDummyRegExt = 0x08 \\
+  \hline
+  1-4-4 Quad I/O        & 6 mode + 2 dummy cycles& 10 cycles              & \asqspiDummyRegExt = 0x08 / 0x0A \\
+  \hline
+\end{tabularx}
+\end{table}
+
+\paragraph{Note on Quad Enable: }
+Both reference devices require a Quad Enable (QE) bit to be set in the flash device's
+non-volatile status register before QUAD mode can be used. This is a one-time
+(or volatile) configuration step performed by the SW driver via a standard
+Write Enable (0x06) followed by a Write Status Register command. The QSPI controller
+itself does not perform this step automatically.

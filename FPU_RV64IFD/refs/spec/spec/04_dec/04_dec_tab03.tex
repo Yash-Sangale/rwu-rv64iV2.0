@@ -1,0 +1,45 @@
+Table \ref{tab:asDec01} shows the input and outputs of the ALU0. This are all primary inputs and outputs. There is no bi-directional, tristate or open drain pin. All pins are high-active except the pins with a \_n\_ in its name.
+\begin{table}[H]
+\caption{InstrDec0 I/O}
+\label{tab:asDec01}
+%\begin{table}[ht]
+\centering
+\begin{tabularx}{\textwidth}{|l |l |l |X|}
+  \hline
+  Pin & Dir. & Wd. & Explanation \\
+  \hline
+  \hline
+  opcode\_i & in & 7 & The opcode field of the instruction. This are the least significant 7 bits of the instruction. \\
+  \hline
+  func3\_i & in & 3 & The func3-field of the instruction. It specifies the opcode. \\
+  \hline
+  func7b5\_i & in & 1 &  Bit 5 of func7 field. \\
+  \hline
+  zero\_i & in & 1 &  Indicates a branch. Comes from the ALU. \\
+  \hline
+  resultSrc\_o & out & 2 & Controls the Mux behind the DMem. \\
+  \hline
+  dMemWr\_o & out & 1 &  D-Mem write enable. \\
+  \hline
+  dMemRd\_o & out & 1 &  D-Mem read enable; almost not needed anymore. \\
+  \hline
+  PCSrc\_o & out & 1 &  Control of the Mux for the PC; normal operation or jump/branch. \\
+  \hline
+  aluSrcB\_o & out & 1 &  Data Mux in front of ALU. \\
+  \hline
+  aluSrcA\_o & out & 1 &  Data Mux in front of ALU. \\
+  \hline
+  regWr\_o & out & 1 &  Register file write enable. \\
+  \hline
+  jump\_o & out & 1 &   Src for branch target mux: register or PC as input for branch target adder. \\
+  \hline
+  immSrc\_o & out & 3 &   Selects, how the immediate value will be generated. \\
+  \hline
+  aluSel\_o & out & 5 &  ALU control. \\
+  \hline
+  branch\_s\_o & out & 1 &  only for pipeline solution \\
+  \hline
+  jump\_s\_o & out & 1 &  only for pipeline solution \\
+  \hline
+\end{tabularx}
+\end{table}

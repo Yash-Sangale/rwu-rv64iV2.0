@@ -1,0 +1,25 @@
+\begin{table}[H]
+\caption{HW Interfaces of Module QSPI0}
+\label{tab:asQspiPer02}
+\centering
+\begin{tabularx}{\textwidth}{|l |l |X|}
+  \hline
+   & Module internal name & Chip level name \\
+  \hline
+  \hline
+  Supply &  &  \\
+  \hline
+  Clock & clk\_i & clk\_i \\
+  \hline
+  Bus & System Bus & Wishbone \\
+  \hline
+  Interrupt & qspi\_irq\_o &  qspi\_irq\_s \\
+  \hline
+  DMA & None & - \\
+  \hline
+  External Signals & sck\_o & \asqspiSCK \\
+                   & cs\_o & \asqspiCS \\
+                   & data\_io[3:0] & \asqspiData[3:0] \\
+  \hline
+\end{tabularx}
+\end{table}

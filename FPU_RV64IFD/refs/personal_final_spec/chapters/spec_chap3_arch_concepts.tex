@@ -1,0 +1,260 @@
+% ============================================================
+%   CHAPTER 3: Architecture Concepts
+% ============================================================
+
+\chapter{Architecture Concepts}
+\label{chap:architecture_concepts}
+
+\begin{table}[H]
+\caption{Revision History – Chapter 3}
+\centering
+\begin{tabular}{llll}
+\toprule
+Version & Date & Author & Description \\
+\midrule
+1.0 & \today & Y. Sangale & Initial Draft \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+This section defines the fundamental architectural principles of the 64-bit \gls{riscv} single-core microcontroller. It provides a high-level technical description of the \gls{cpu} core, memory subsystem, bus structure, interrupt design, clocking strategy, and register architecture. 
+
+\textcolor{blue}{\textbf{\textit{Concepts related to power management, security, and debug will be fully defined in the final specification revision.}}}
+
+\subsection{Technology}
+
+The microcontroller is conceptually targeted for implementation in a modern \textbf{90\,nm CMOS technology node}. 
+This node provides a balanced compromise between integration density, power efficiency, and manufacturing cost, 
+making it suitable for compact embedded microcontrollers and low-complexity \gls{SoC} designs.
+
+The 90\,nm node enables:
+\begin{itemize}
+  \item Higher operating frequencies compared to older planar CMOS nodes.
+  \item Reduced dynamic and static power consumption.
+  \item Dense \gls{sram} bitcells allowing larger memories in a small silicon footprint.
+\end{itemize}
+
+Although the conceptual design and functional model are developed and validated using synthesizable \gls{hdl} on \gls{fpga} platforms, 
+the microarchitecture, clocking structures, and memory system were designed with 90\,nm \gls{asic} fabrication constraints in mind.
+This includes fully synchronous logic, controlled critical paths, and modular blocks suitable for automated place-and-route flows.
+
+\subsection{\gls{cpu} Concept}
+The \gls{cpu} core is a compact, single instruction \gls{rv64i} processor optimized for determinism and simplicity.
+
+\begin{itemize}
+    \item \textbf{Pipeline:} A simple scalar \gls{pipeline} (Fetch–Decode–Execute–Writeback) without speculation or out-of-order features.
+    \item \textbf{\gls{isa} Support:} Fully compliant with \gls{rv64i} + M-extension (integer multiply/divide).
+    \item \textbf{Datapath Width:} 64-bit \gls{alu}, registers, and internal buses.
+    \item \textbf{Register File:} 32 × 64-bit general-purpose registers (x0–x31), with direct \gls{cpu} access (no bus).
+    \item \textbf{Memory Access Model:} \gls{Harvard} architecture — separate \gls{I-MEM} and \gls{D-MEM} buses.
+          \begin{itemize}
+              \item Dedicated instruction interface to \gls{I-MEM}.
+              \item Dedicated data interface to \gls{D-MEM}.
+              \item Memory-mapped I/O via Wishbone for all peripherals.
+          \end{itemize}
+    \item \textbf{Program Counter:} 64-bit \gls{pc} with generation logic (\gls{pc} +4, branch target, jump target).
+    \item \textbf{Interrupt Integration:} Receives a single aggregated interrupt line from the Interrupt Controller 
+          and vectoring is performed as per \gls{riscv} rules.
+\end{itemize}
+
+\begin{itemize}
+    \item \textbf{Pipeline:} Single-stage or simplified multi-stage \gls{pipeline} (Fetch → Decode → Execute → Writeback).
+    \item \textbf{Data Width:} 64-bit \gls{alu}, register file, and datapath.
+    \item \textbf{Instruction Execution:} One instruction executed at a time; no out-of-order execution.
+    \item \textbf{\gls{isa}Support:} \gls{rv64i} with full support for:
+        \begin{itemize}
+            \item 64-bit integer arithmetic and logical operations,
+            \item Load/store with byte, half-word, word, and double-word support,
+            \item Multiply/divide (M-extension),
+            \item Branch and jump instructions.
+        \end{itemize}
+    \item \textbf{Interrupt Input:} Single external interrupt line fed by the Interrupt Controller.
+    \item \textbf{Memory Access:} \gls{Harvard} architecture — separate \gls{I-MEM} and \gls{D-MEM} buses.
+\end{itemize}
+
+\subsection{Bus Concept}
+The microcontroller employs a simple and predictable communication architecture centered around a 
+\textbf{single-master bus topology}. The \gls{cpu} core is the only bus master and is responsible for initiating 
+all data and peripheral access transactions. This simplifies arbitration, reduces latency, and provides 
+deterministic behavior suitable for education, prototyping, and low-complexity embedded applications.
+
+The system uses two categories of interconnects:
+
+\begin{itemize}
+    \item \textbf{Direct \gls{cpu} Connections}  
+    The following modules are connected directly to the \gls{cpu} datapath and do not use the system bus:
+    \begin{itemize}
+        \item \textbf{Instruction Memory (\gls{I-MEM}):} Accessed through a dedicated instruction fetch interface.
+        \item \textbf{Data Memory (\gls{D-MEM}):} Connected through a dedicated data access path for load/store instructions.
+        \item \textbf{Register File (RF):} Integrated directly into the \gls{cpu} \gls{pipeline}.
+    \end{itemize}
+
+    These direct connections enable single-cycle access to critical datapath components and support 
+    a clean \gls{Harvard} architectural split.
+
+    \item \textbf{Wishbone-Based Peripheral Bus}  
+    All other memory-mapped peripherals are connected using a \textbf{Wishbone-compliant} slave interface.  
+    This bus is used for:
+    \begin{itemize}
+        \item General Purpose I/O (\gls{gpio}),
+        \item Universal Asynchronous Receiver/Transmitter (\gls{uart}),
+        \item Quad-SPI Master (\gls{qspi}),
+        \item Interrupt Controller,
+    \end{itemize}
+
+    The Wishbone bus provides standardized signaling for address, data, strobes, and acknowledgments, enabling:
+    \begin{itemize}
+        \item Modular and plug-and-play peripheral integration,
+        \item Predictable, single-master timing behavior,
+        \item Straightforward extension with new peripherals,
+        \item Clean separation between \gls{cpu} datapath and peripheral logic.
+    \end{itemize}
+\end{itemize}
+
+
+\subsection{Memory Concept}
+The memory subsystem is based on a clean \gls{Harvard} architecture with separated instruction and data paths.
+
+\begin{itemize}
+    \item \textbf{Instruction Memory (\gls{I-MEM}):}
+          \begin{itemize}
+              \item 64\,KB read-only memory for program storage.
+              \item Dedicated \gls{cpu} instruction fetch path (non-Wishbone).
+              \item High-performance single-cycle access for most operations.
+          \end{itemize}
+
+    \item \textbf{Data Memory (\gls{D-MEM}):}
+          \begin{itemize}
+              \item 64\,KB data RAM for stack, heap, and program data.
+              \item Direct \gls{cpu} data access (non-Wishbone).
+              \item Fully synchronous with \gls{cpu} core.
+          \end{itemize}
+
+    \item \textbf{Memory-Mapped I/O:}
+          \begin{itemize}
+              \item Peripherals mapped in the 0x1000\_0000 address region.
+              \item Accessed exclusively via the Wishbone peripheral bus.
+          \end{itemize}
+
+    \item \textbf{Extensibility:}
+          \begin{itemize}
+              \item Optional I-Cache and D-Cache may be added in future without changing the CPU–bus interface.
+          \end{itemize}
+\end{itemize}
+
+\subsection{Interrupt Concept}
+The interrupt subsystem is based on a configurable multi-source interrupt controller supplying a single interrupt input to the \gls{cpu}.
+
+\begin{itemize}
+    \item \textbf{\gls{IRQ} Lines:} 8 independent inputs (\texttt{\gls{IRQ}[7:0]}) with per-line configuration.
+    \item \textbf{Trigger Types:}
+        \begin{itemize}
+            \item Level-high
+            \item Rising edge
+            \item Falling edge
+            \item Both edges
+            \item Pulse/one-shot
+        \end{itemize}
+    \item \textbf{Edge Detection:} Implemented using per-line previous-state registers.
+    \item \textbf{Control Registers:} 
+          Mask, type-select, and pending-status registers accessible via Wishbone.
+    \item \textbf{Vector Computation:}
+          \[
+              \text{ISR Vector} = \text{BASE\_ADDR} + (\text{\gls{IRQ}\_ID} \times 0x10)
+          \]
+    \item \textbf{Priority Model:} Fixed priority (IRQ0 highest) for the initial revision.
+    \item \textbf{\gls{cpu} Interface:} Outputs a single interrupt line to the \gls{cpu}'s machine-mode interrupt system.
+\end{itemize}
+
+\subsection{Clock Concept}
+The microcontroller uses an 80\,MHz main system clock with optional peripheral clock division.
+
+\begin{itemize}
+    \item \textbf{Core Clock:} 80\,MHz clock feeding \gls{cpu}, \gls{I-MEM}, and \gls{D-MEM}.
+    \item \textbf{Peripheral Clocks:} Generated via a programmable divider block:
+          \begin{itemize}
+              \item Divide-by-2, /4, /8, etc.
+              \item Per-peripheral selectable clock domains.
+          \end{itemize}
+    \item \textbf{Clock Control Registers:} Accessible via Wishbone.
+    \item \textbf{Clock Domain Crossing:} 
+          Standard two-flip-flop synchronizers used where required (e.g., \gls{uart}, \gls{qspi}).
+\end{itemize}
+
+\subsection{System Control Concept}
+System control is centered around a simple and robust global reset architecture.  
+The microcontroller implements an \textbf{external \gls{gpio}-based reset input}, which provides a direct and intuitive 
+mechanism to reinitialize the entire system.
+
+\begin{itemize}
+    \item \textbf{External Reset Input:}  
+          A dedicated \gls{gpio} pin is configured as a reset input. When driven \textbf{low}, it asserts a 
+          system-wide synchronous reset.
+
+    \item \textbf{Reset Behavior:}
+          \begin{itemize}
+              \item All \gls{cpu} state (\gls{pc} , registers, CSRs) is reset to defined initial v\gls{alu}es.
+              \item Instruction Memory and Data Memory interfaces are reset.
+              \item All Wishbone peripherals (\gls{gpio}, \gls{uart}, \gls{qspi}, \gls{IRQ} controller, Clock Control, JTAG region) 
+                    return to default configuration.
+              \item All internal state machines return to IDLE.
+          \end{itemize}
+
+    \item \textbf{Synchronization:}  
+          The external reset signal passes through a two-stage synchronizer to ensure safe integration into the 
+          main clock domain.
+
+    \item \textbf{Reset Release:}  
+          When the external \gls{gpio} reset input returns high, the system exits reset synchronously at the next 
+          active clock edge.
+
+\end{itemize}
+
+This minimal reset architecture provides deterministic system initialization and simplifies external control 
+during prototyping and debugging.
+
+\subsection{Register Concept}
+The Register Concept defines the structure and behavior of all \textbf{memory-mapped peripheral registers} 
+accessible through the Wishbone bus. These registers are used to configure, control, and monitor the operation 
+of \gls{gpio}, \gls{uart}, \gls{qspi}, the Interrupt Controller, the Clock Control Unit, and other on-chip peripherals.
+
+\begin{itemize}
+    \item \textbf{Scope:}  
+          Only peripheral registers are included.  
+          \gls{cpu}-internal structures such as the Register File and CSRs are part of the \gls{cpu} microarchitecture 
+          and are not memory-mapped.
+
+    \item \textbf{Register Types:}
+        \begin{itemize}
+            \item Control registers (enable, mode select, configuration)
+            \item Status registers (interrupt flags, error states, peripheral activity)
+            \item Data registers (\gls{uart} TX/RX, \gls{qspi} data buffer, \gls{gpio} input/output)
+            \item Configuration registers (\gls{IRQ} trigger type, \gls{gpio} direction, clock divisor)
+        \end{itemize}
+
+    \item \textbf{Access Method:}  
+          All registers are accessed via standard 32-bit or 64-bit \gls{cpu} load/store instructions through the 
+          Wishbone data bus.
+
+    \item \textbf{Address Alignment:}  
+          All registers are aligned to 32-bit word boundaries.
+
+    \item \textbf{Reset Behavior:}  
+          On system reset, all registers revert to defined default states to ensure predictable system startup.
+
+\end{itemize}
+
+
+\subsection{Power Concept}
+
+\textcolor{blue}{\textbf{\textit{Section to be completed in the final document revision.}}}
+
+\subsection{System Protection and Security Concept}
+
+\textcolor{blue}{\textbf{\textit{Section to be completed in the final document revision.}}}
+
+\subsection{Debug Concept}
+
+\textcolor{blue}{\textbf{\textit{Section to be completed in the final document revision.}}}
+
+

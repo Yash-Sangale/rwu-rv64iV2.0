@@ -1,0 +1,133 @@
+% ============================================================
+%   CHAPTER 4: Description of the Design Elements
+% ============================================================
+\chapter{Description of the Design Elements}
+\label{chap:design_elements}
+
+\begin{table}[H]
+\caption{Revision History – Chapter 4}
+\centering
+\begin{tabular}{llll}
+\toprule
+Version & Date & Author & Description \\
+\midrule
+1.0 & \today & Y. Sangale & Initial Draft \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textcolor{blue}{\textbf{\textit{This Section will be completed later.}}}
+
+This chapter provides a detailed technical description of all major design elements composing the \gls{rv64i}
+64-bit single-core microcontroller.  
+Each sub-block is presented in terms of hardware interfaces, bus connectivity, internal registers, 
+and its functional and structural roles within the \gls{SoC}.  
+All diagrams and tables are placeholders for later detailed schematics.
+
+% ============================================================
+\section{\gls{cpu} Core}
+
+\subsection{HW Interfaces to Other Blocks}
+The \gls{cpu} Core is the central processing unit of the system, implementing the RV64IM instruction set
+and acting as the single bus master in the microcontroller architecture.  
+It connects to all major subsystems as follows:
+\begin{itemize}
+    \item \textbf{Instruction Memory (\gls{I-MEM}):} Connected directly via the \textbf{Instruction Bus (I-Bus)} 
+          for program fetch under the \gls{Harvard} architecture model.
+    \item \textbf{Data Memory (\gls{D-MEM}):} Connected directly via the \textbf{Data Bus (D-Bus)} for load/store access.
+    \item \textbf{Wishbone Bus:} Acts as the \textbf{bus master} interfacing to all memory-mapped peripherals 
+          (\gls{gpio}, \gls{uart}, \gls{qspi}, Interrupt Controller, and Clock Unit).
+    \item \textbf{Interrupt Input:} Receives a single aggregated interrupt signal from the Vectored Interrupt Controller (VIC).
+    \item \textbf{Clock and Reset:} Driven by the system clock from the Clock Generation Unit (CGU) and 
+          synchronized reset signal.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \caption{\gls{cpu} Core interface diagram showing I-Bus, D-Bus, and Wishbone connections to system blocks.}
+    \label{fig:cpu_interface}
+\end{figure}
+
+\subsection{Bus Interface}
+The \gls{cpu} operates as a \textbf{Wishbone Master} for all peripheral transactions.
+It initiates read/write cycles with standard Wishbone control signals:
+\texttt{ADR\_O}, \texttt{DAT\_O}, \texttt{DAT\_I}, \texttt{STB\_O}, \texttt{ACK\_I}, \texttt{CYC\_O}, and \texttt{WE\_O}.  
+Instruction and data memories are accessed directly via the independent I-Bus and D-Bus, each 
+64-bit wide for full datapath utilization.
+
+\begin{figure}[H]
+    \centering
+    \caption{\gls{cpu} bus architecture — direct \gls{Harvard}-style connections to \gls{I-MEM}/\gls{D-MEM} and Wishbone master for peripherals.}
+    \label{fig:cpu_bus_arch}
+\end{figure}
+
+\subsection{Registers}
+The \gls{cpu} core implements 32 × 64-bit general-purpose registers (\texttt{x0–x31}) and a 64-bit program counter.
+Several internal control and status registers are included for interrupt and \gls{pipeline} management.
+
+\begin{table}[H]
+    \centering
+    \caption{\gls{cpu} Core Register Summary}
+    \label{tab:cpu_registers}
+    \begin{tabular}{|l|l|}
+        \hline
+        \textbf{Register} & \textbf{Description} \\ \hline
+        \gls{pc} & 64-bit Program Counter for sequential and branch control \\ \hline
+        IR & Instruction Register holding current fetched instruction \\ \hline
+        SR & Status Register with control and flag bits \\ \hline
+        IBASE & Base address for interrupt vector table \\ \hline
+        MSTATUS & Machine Status Register (\gls{rv64i} subset) \\ \hline
+    \end{tabular}
+\end{table}
+
+\subsection{Functional Overview}
+The \gls{cpu} executes instructions using a deterministic scalar \gls{pipeline} that supports the \gls{riscv} RV64IM base instruction set.
+Internally, it consists of the following major sub-modules:
+\begin{itemize}
+    \item \textbf{Instruction Decoder:} Decodes opcodes fetched from \gls{I-MEM} and generates control signals for \gls{alu} and memory.
+    \item \textbf{Program Counter (\gls{pc} ):} Maintains the address of the current instruction and computes sequential or branch targets.
+    \item \textbf{\gls{alu}:} Performs arithmetic, logical, shift, and comparison operations; supports integer multiply/divide.
+    \item \textbf{Register File:} Provides two read ports and one write port for operand access and result storage.
+    \item \textbf{Interrupt Input:} Interfaces with VIC to handle asynchronous interrupt requests.
+\end{itemize}
+
+Each instruction is executed in a simple in-order flow without speculation or \gls{pipeline} hazards beyond single-cycle stalls.
+
+\begin{figure}[H]
+    \centering
+    \caption{\gls{cpu} Core internal structure showing Instruction Decoder, \gls{alu}, Program Counter, and Register File.}
+    \label{fig:cpu_structure}
+\end{figure}
+
+\subsection{Structural Overview}
+The \gls{cpu} architecture follows a \gls{Harvard} model with:
+\begin{itemize}
+    \item Dedicated instruction path (I-Bus) for fetching 64-bit instructions.
+    \item Dedicated data path (D-Bus) for memory and peripheral data transactions.
+    \item Unified Wishbone interface for peripheral control and configuration.
+\end{itemize}
+
+The internal control path coordinates fetch, decode, execute, and memory operations.
+Instruction flow synchronization ensures deterministic timing suitable for embedded applications.
+
+\begin{figure}[H]
+    \centering
+    \caption{Simplified \gls{Harvard} architecture connection of \gls{cpu} to \gls{I-MEM}, \gls{D-MEM}, and Wishbone peripherals.}
+    \label{fig:cpu_harvard_arch}
+\end{figure}
+
+\subsection{Interrupts}
+A single interrupt input line connects to the VIC.  
+The \gls{cpu} jumps to a vector address computed as:
+\[
+\text{ISR Vector} = \text{IBASE} + (\text{\gls{IRQ}\_ID} \times 0x10)
+\]
+Upon completion, control returns to the instruction following the interrupted instruction.
+
+\subsection{Clock and Reset}
+The \gls{cpu} operates at an 80\,MHz clock supplied by the CGU.  
+Reset initializes the \gls{pc} to 0x0000\_0000, clears all \gls{pipeline} stages, and resets the internal status registers.
+
+\subsection{Voltage Class}
+Core operates in the 3.3\,V logic domain.
+

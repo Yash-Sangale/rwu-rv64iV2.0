@@ -1,0 +1,64 @@
+In the following the registers of a GPIO peripheral are listed and described. Some registers’ layout or availability depends on the generic feature set implemented for that GPIO’s instantiation. Such registers and concerned bit fields are denoted by the use of italic style.
+
+\subsubsection{GPIO Register Overview}
+
+\begin{table}[H]
+\caption{GPIO Register List}
+\label{tab:asGpioPer04}
+\centering
+\begin{tabularx}{\textwidth}{|l |X |l|}
+  \hline
+  Register Group & Register Name & Register Symbol \\
+  \hline
+  \hline
+  System Registers & (Clock Control Register) & (\textbf{CLC}) \\
+  & Identification Register & \textbf{ID} \\
+  \hline
+  Special  & (Run Control Register) & (\textbf{RUN\_CTRL}) \\
+  Function & Direction Register & \asgpioDirRegExt \\
+  Registers & Data Register & \asgpioDatRegExt \\
+  \hline
+  Interrupt & Interrupt Mask Control Register & \asgpioIMSCRegExt \\
+  Registers & Raw Interrupt Status Register & \asgpioRISRegExt \\
+  & Masked Interrupt Status Register & \asgpioMISRegExt \\
+  & Interrupt Set Register & \asgpioISRRegExt \\
+  & Interrupt Source Status Register & \asgpioIRQSSRegExt \\
+  & Interrupt Source Mask Register & \asgpioIRQSMRegExt \\
+  & Interrupt Source Clear Register & \asgpioIRQSCRegExt \\
+  \hline
+\end{tabularx}
+\end{table}
+
+
+\subsubsection{Read-Write Features}
+\begin{itemize}
+  \item w: writable bit, by SW
+  \item r: readable bit, by SW
+  \item h: bit will be set by HW only
+\end{itemize}
+
+\subsubsection{System Registers}
+\paragraph{GPIO\_ID} -:
+Identification register of this peripheral. A write will have no effect, a read will return the fixed ID. The ID will be defined on chip level.
+           
+\asregkopf{ID register (in BPI)}{$000100000000C001_H$}
+\asregfourxsixteen{\multicolumn{16}{|c|}{MOD\_NUMBER}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {1&1&0&0&0&0&0&0&\multicolumn{8}{c|}{REV\_NUMBER}}
+                             {r&r&r&r&r&r&r&r&\multicolumn{8}{c|}{r}}
+
+\asregdesc{MOD\_NUMBER & 63:48 & r & Module Identification Number. \\
+           \hline
+           - & 47:16 & r & Reserved \\
+           \hline
+           - & 15:8 & r & The value C0 indicates the peripheral as 64-bit module.\\
+           \hline
+           REV\_NUMBER & 7:0 & r & Module Revision Number: Bits 7-0 are used for module revision numbering.}
+
+\subsubsection{Special Function Registers}
+
+\subsubsection{Interrupt Registers}

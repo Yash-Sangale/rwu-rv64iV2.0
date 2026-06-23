@@ -1,0 +1,453 @@
+% ============================================================
+% FILE: latex_additions.tex
+%
+% Integration instructions:
+%   - Section A: Insert at the beginning of Chapter 3 (Architecture Concepts),
+%     immediately after the \chapter{Architecture Concepts} heading and before
+%     Table 3.1 (Revision History).
+%   - Section B: Replace the placeholder body of Chapter 6 (Test And Debug),
+%     i.e. replace everything after Table 6.1 (Revision History).
+%   - Add the bibliography entries in Section C to your references.bib file.
+%
+% Both sections reference the existing specification content and assume the
+% acronyms/glossary already defined in the document (CPU, ALU, etc.).
+% ============================================================
+
+
+% ============================================================
+% SECTION A — Chapter 3: Brief Introduction (insert before Table 3.1)
+% ============================================================
+
+The architecture of the RWU64IM microcontroller is designed around a set of explicit
+structural decisions that directly govern both its functional behaviour and its security
+posture.  The processor implements the RV64I base integer instruction set, extended
+with the RV64M, RV64A, and RV64D instruction subsets, and is built around a scalar,
+in-order pipeline operating at \SI{80}{\mega\hertz}.  All memory accesses use physical
+addressing without virtual memory translation; the system exposes a single machine-mode
+privilege level with no user or supervisor separation.
+
+A key consequence of this architectural minimalism is the elimination of entire classes
+of microarchitectural vulnerabilities.  Transient execution attacks such as
+Meltdown~\cite{lipp2018meltdown} and Spectre~\cite{kocher2019spectre} are predicated
+on the simultaneous presence of speculative or out-of-order execution, a hardware-enforced
+isolation boundary, and a shared observable side-channel (typically the cache hierarchy).
+The absence of privilege separation and virtual memory in this design structurally
+removes the preconditions required for Meltdown and for Spectre Variant 2 (Branch
+Target Injection).  Spectre Variant 1 (Bounds Check Bypass) remains conditionally
+relevant in multi-component software deployments that share the physical address space
+without hardware-enforced boundaries; a cache timing side-channel is present due to the
+shared data cache.  The security implications of these properties are analysed in
+detail in Chapter~\ref{chap:testdebug}.
+
+The architectural concepts described in this chapter — the CPU and FPU pipeline
+structure, bus topology, memory organisation, interrupt model, clock strategy, and
+register layout — are presented with this combined functional and security context
+in mind.
+
+
+% ============================================================
+% SECTION B — Chapter 6: Test And Debug (full replacement body)
+% ============================================================
+%
+% Replace the placeholder text "This Section will be completed later. ..."
+% with the following content. Keep Table 6.1 (Revision History) in place.
+% ============================================================
+
+\label{chap:testdebug}
+
+This chapter analyses the security properties of the RWU64IM microcontroller with
+respect to transient execution attacks, documents the conditions under which the
+architecture is and is not vulnerable, and specifies both the functional verification
+strategy and the security test approach.
+
+% ----------------------------------------------------------
+\section{Security Analysis: Transient Execution Vulnerabilities}
+% ----------------------------------------------------------
+
+Transient execution attacks exploit the gap between what a processor commits
+architecturally and what it executes microarchitecturally during speculative or
+out-of-order processing.  Two published attack families — Meltdown
+(CVE-2017-5754)~\cite{lipp2018meltdown} and Spectre
+(CVE-2017-5753, CVE-2017-5715)~\cite{kocher2019spectre} — represent the primary
+threat model evaluated against this design.
+
+% ----------------------------------------------------------
+\subsection{Attack Preconditions}
+% ----------------------------------------------------------
+
+Three architectural conditions must be simultaneously present for a transient
+execution attack to be instantiable~\cite{kocher2019spectre,lipp2018meltdown}:
+
+\begin{enumerate}
+  \item \textbf{Speculative or out-of-order (OoO) execution.}  Instructions must be
+        capable of executing before their architectural validity has been confirmed.
+        Without this, no transient execution window exists.
+  \item \textbf{Shared, observable cache.}  The cache must be accessible to both the
+        speculating execution path and the attacker's measurement code, enabling
+        timing-based inference of transiently accessed data~\cite{gruss2016flushflush}.
+  \item \textbf{Hardware-enforced isolation boundary (attack-class specific).}
+        Meltdown additionally requires a privilege boundary and a page-fault mechanism
+        to create a deferred exception window.  Spectre Variant~2 additionally requires
+        separate execution contexts sharing a branch predictor state.
+\end{enumerate}
+
+Vulnerability arises from the composition of these conditions; the removal of any
+single required precondition is sufficient to invalidate the corresponding attack
+class~\cite{intel2018analysis}.
+
+% ----------------------------------------------------------
+\subsection{Meltdown Analysis}
+% ----------------------------------------------------------
+
+Meltdown exploits the delay between speculative execution of a faulting memory load
+and the enforcement of the access permission that causes the fault.  During this
+transient window the illegally loaded data may propagate into microarchitectural state
+(cache), from which it is exfiltrated via a timing side-channel~\cite{lipp2018meltdown}.
+
+The mechanism requires:
+\begin{itemize}
+  \item A hardware-enforced privilege boundary (user/kernel or equivalent),
+  \item Virtual memory with page tables and per-page permission bits,
+  \item A page-fault exception that is raised \emph{after} the dependent speculative
+        instructions have already modified cache state, and
+  \item A shared cache as the covert exfiltration channel.
+\end{itemize}
+
+The RWU64IM design implements none of the first three conditions.  The processor
+operates exclusively in machine mode with physical addressing; there are no page
+tables, no MMU, no \texttt{satp} register, and no page-fault exceptions.  Every
+memory access to the physically addressed space succeeds architecturally; no faulting
+load can be issued, and therefore no transient fault window is created.
+
+\textbf{Result:} Meltdown is structurally impossible on this design.  The flat memory
+model means that any address can be read directly — this is a consequence of the
+architectural choice, not a mitigated vulnerability.
+
+% ----------------------------------------------------------
+\subsection{Spectre Analysis}
+% ----------------------------------------------------------
+
+Spectre exploits branch misprediction to cause the processor to speculatively execute
+unintended code paths.  The speculatively accessed data is encoded into cache state
+and subsequently recovered by timing measurement~\cite{kocher2019spectre}.
+
+\subsubsection{Variant 1 — Bounds Check Bypass (CVE-2017-5753)}
+
+Variant~1 requires a predictable conditional branch (e.g.\ a bounds check), a branch
+predictor that can be trained by an attacker, a cache-encodable out-of-bounds access
+on the mispredicted path, and an isolation boundary between attacker and victim to
+make the leakage meaningful.
+
+The RWU64IM processor includes a hardware branch predictor and an in-order-issued,
+out-of-order-executing pipeline with a Reorder Buffer, satisfying the execution and
+prediction prerequisites.  A shared data cache is present, providing the covert
+channel.  However, the system exposes no hardware-enforced isolation boundary:
+all software executes in the same machine-mode trust domain with uniform physical
+memory access.  In a single-application deployment there is therefore no meaningful
+security boundary to cross.
+
+\textbf{Qualification:} If the system runs multiple co-resident software components
+(e.g.\ a cooperative real-time kernel with multiple tasks sharing the address space),
+a software-defined boundary emerges.  In this scenario Spectre~Variant~1 is feasible
+because the hardware provides no mechanism to prevent one task from speculatively
+reading another task's data.  The standard mitigation is insertion of speculation
+barriers (\texttt{fence} instructions in RISC-V) at security-sensitive branch sites,
+or replacement of conditional bounds checks with constant-time index-masking
+(\texttt{x = x \& (size-1)}).
+
+\subsubsection{Variant 2 — Branch Target Injection (CVE-2017-5715)}
+
+Variant~2 poisons the Branch Target Buffer (BTB) of a victim execution context to
+redirect speculative indirect-branch execution to an attacker-chosen gadget.  This
+requires separate, isolated execution contexts sharing predictor hardware state.
+
+The RWU64IM design implements a single machine-mode privilege level.  There is no
+separate victim context and no isolation boundary between predictor-training code and
+victim code.  BTB poisoning is technically possible but has no meaningful target: all
+code already executes in the same domain and can access all memory directly.
+
+\textbf{Result:} Spectre Variant~2 is not applicable.
+
+% ----------------------------------------------------------
+\subsection{Cache Timing Side-Channel}
+% ----------------------------------------------------------
+
+A cache timing side-channel exists independently of the Meltdown and Spectre attack
+classes~\cite{gruss2016flushflush,arm2018cache}.  It requires only:
+\begin{itemize}
+  \item A shared cache whose fill state depends on access patterns,
+  \item A measurable timing difference between a cache hit and a cache miss, and
+  \item A mechanism for the attacker to trigger or observe data-dependent memory
+        accesses.
+\end{itemize}
+
+The data cache of the RWU64IM satisfies all three conditions.  The primary
+measurement primitive on RISC-V is the \texttt{rdcycle} CSR instruction, which is
+accessible in machine mode.  Typical observed thresholds are: L1 cache hit~$\leq 15$
+cycles; DRAM access~$\geq 150$ cycles~\cite{kocher2019spectre}.  The Flush+Reload
+technique~\cite{lipp2018meltdown} is realisable using cache eviction loops (the
+RISC-V Zicbom extension \texttt{cbo.inval}~\cite{riscv2022zicbom} provides an
+explicit invalidation instruction when available).
+
+\textbf{Result:} A cache timing side-channel is present and functional.  It does not
+by itself constitute a Meltdown or Spectre exploit on this design, but represents a
+residual microarchitectural leakage mechanism that must be addressed when co-resident
+software components with differing trust levels are deployed.
+
+% ----------------------------------------------------------
+\subsection{Vulnerability Summary}
+% ----------------------------------------------------------
+
+\begin{table}[h]
+\centering
+\caption{Transient Execution Vulnerability Assessment}
+\label{tab:vuln_summary}
+\begin{tabular}{llp{7cm}}
+\hline
+\textbf{Vulnerability} & \textbf{Status} & \textbf{Reason} \\
+\hline
+Meltdown (CVE-2017-5754)     & Not applicable        & No privilege boundary; no page-fault mechanism; physical addressing only \\
+Spectre V1 (CVE-2017-5753)   & Conditionally possible & Hardware preconditions (branch predictor, cache) present; requires software-defined isolation boundary to be exploitable \\
+Spectre V2 (CVE-2017-5715)   & Not applicable        & No separate execution context; no victim isolation domain \\
+Cache timing side-channel     & Present               & Shared cache with measurable hit/miss latency difference \\
+\hline
+\end{tabular}
+\end{table}
+
+% ----------------------------------------------------------
+\section{Countermeasures}
+% ----------------------------------------------------------
+
+\subsection{Software-Level Mitigations}
+
+\paragraph{Speculation barriers.}
+The RISC-V \texttt{fence} instruction serialises memory operations and prevents
+speculative execution beyond the barrier point.  It should be inserted immediately
+after bounds-check branches at software isolation boundaries:
+
+\begin{verbatim}
+if (x < size) {
+    asm volatile ("fence");
+    val = array[x];
+}
+\end{verbatim}
+
+\paragraph{Index masking (branch elimination).}
+Bounds checks can be replaced with arithmetic masking for power-of-two array sizes,
+eliminating the conditional branch and thus the branch predictor dependency:
+
+\begin{verbatim}
+x   = x & (size - 1);
+val = array[x];
+\end{verbatim}
+
+\paragraph{Constant-time access patterns.}
+Security-sensitive code should access data unconditionally and select results via
+arithmetic masks rather than conditional branches, removing data-dependent cache
+footprints.  This is standard practice in cryptographic implementations.
+
+\paragraph{Cycle-counter restriction.}
+Clearing the \texttt{CY} bit in the \texttt{mcounteren} CSR prevents unprivileged
+code from reading \texttt{rdcycle}, degrading the timing resolution available to
+an attacker.  This increases noise in the side-channel but does not eliminate it.
+
+\subsection{Hardware-Level Mitigations}
+
+\paragraph{Cache partitioning.}
+The 2-way set-associative cache can be partitioned between software components
+(one cache way per component) to prevent cross-component cache-set eviction
+observation.  This requires modification to the cache controller and a software
+convention for way allocation.
+
+\paragraph{Speculative cache-fill suppression.}
+The strongest hardware countermeasure is to prevent cache-line fills from instructions
+that are subsequently flushed from the Reorder Buffer (i.e.\ instructions that are
+never architecturally committed).  This aligns microarchitectural cache state with
+architectural commit semantics, eliminating the persistent side-channel that all
+transient execution attacks depend on.  Implementation requires tagging speculative
+load operations in the ROB and suppressing the corresponding cache-fill signals until
+commit.
+
+\begin{table}[h]
+\centering
+\caption{Countermeasure Applicability Summary}
+\label{tab:countermeasures}
+\begin{tabular}{llll}
+\hline
+\textbf{Countermeasure} & \textbf{Target} & \textbf{Type} & \textbf{Effectiveness} \\
+\hline
+\texttt{fence} instruction barriers  & Spectre V1   & Software & High \\
+Index masking                         & Spectre V1   & Software & High \\
+Constant-time access patterns         & Side-channel & Software & High \\
+Cycle-counter restriction (\texttt{mcounteren}) & Side-channel & Software & Medium \\
+Cache way partitioning                & Side-channel & Hardware & High \\
+Speculative cache-fill suppression    & All classes  & Hardware & Very High \\
+\hline
+\end{tabular}
+\end{table}
+
+% ----------------------------------------------------------
+\section{Functional Verification Strategy}
+% ----------------------------------------------------------
+
+The functional test and debug infrastructure is built around the toolchain described
+in Chapter~5.  Verification covers three levels: unit-level RTL simulation, firmware
+integration testing, and regression testing.
+
+\subsection{RTL Simulation}
+
+Hardware behaviour is verified using \textbf{Xilinx Vivado XSIM} with SystemVerilog
+testbenches.  Simulation is invoked either in console mode (for automation and CI
+pipelines) or in GUI mode with waveform capture for interactive debugging:
+
+\begin{verbatim}
+# Console mode
+xsim <snapshot> -runall
+
+# GUI mode with waveform configuration
+xsim <snapshot> --gui --tclbatch sim/config/xsim_cfg2.tcl
+\end{verbatim}
+
+Each functional block — CPU core, FPU, interrupt controller, UART, QSPI, GPIO,
+Wishbone interconnect — has a dedicated testbench exercising its interface signals
+and expected register behaviour.
+
+\subsection{FPU Verification}
+
+FPU correctness is verified against the IEEE~754-2008 standard using the
+\textbf{Berkeley TestFloat} suite~\cite{hauser2010testfloat}, which provides
+exhaustive corner-case vectors covering all five rounding modes, subnormal operands,
+NaN propagation (quiet and signalling), and all five exception flags (\texttt{NX},
+\texttt{UF}, \texttt{OF}, \texttt{DZ}, \texttt{NV}).  Execution latencies
+(FADD:~3~cycles, FMUL:~4~cycles, FDIV:~20--24~cycles, FSQRT:~25--30~cycles) are
+verified by cycle-accurate simulation.
+
+\subsection{Firmware Integration Tests}
+
+Application-level tests are compiled using the RISC-V GCC toolchain configured for
+\texttt{-march=rv64imd} and loaded into instruction memory via the JTAG interface.
+Each test covers a specific instruction class or peripheral interaction and produces
+a pass/fail result observable on the simulation waveform or a UART output channel.
+
+\subsection{Regression Testing}
+
+The CTest framework integrated into the CMake build system aggregates all unit,
+integration, firmware, and IP-level tests into a single parallel regression run:
+
+\begin{verbatim}
+ctest --test-dir build -j
+\end{verbatim}
+
+All test results are reported per-target, enabling automated detection of regressions
+across pipeline stages.
+
+% ----------------------------------------------------------
+\section{Debug Interface}
+% ----------------------------------------------------------
+
+On-chip debug access is provided through the JTAG interface (IEEE~1149.1-compliant
+pins: \texttt{JTAG\_TCK}, \texttt{JTAG\_TMS}, \texttt{JTAG\_TDI}, \texttt{JTAG\_TDO},
+\texttt{JTAG\_TRST}).  The JTAG TAP controller allows:
+
+\begin{itemize}
+  \item Direct loading of binary images into I-MEM,
+  \item Read access to internal CPU registers and CSRs for debug inspection, and
+  \item System reset assertion via the TAP reset path.
+\end{itemize}
+
+A placeholder for a formal JTAG register-level description and TAP state diagram
+is reserved for the final document revision:
+
+\begin{figure}[h]
+\centering
+% TODO: Insert JTAG TAP state diagram and register map here.
+\fbox{\parbox{0.85\textwidth}{\centering\vspace{2cm}
+\textit{[Placeholder: JTAG TAP State Diagram]}
+\vspace{2cm}}}
+\caption{JTAG TAP controller state diagram (to be completed).}
+\label{fig:jtag_tap}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+% TODO: Insert pipeline simulation waveform showing fetch-decode-execute-writeback
+%       timing for a representative instruction sequence.
+\fbox{\parbox{0.85\textwidth}{\centering\vspace{2cm}
+\textit{[Placeholder: Pipeline Simulation Waveform]}
+\vspace{2cm}}}
+\caption{Representative pipeline simulation waveform (XSIM output).}
+\label{fig:pipeline_wave}
+\end{figure}
+
+
+% ============================================================
+% SECTION C — Bibliography entries (add to references.bib)
+% ============================================================
+%
+% @inproceedings{lipp2018meltdown,
+%   author    = {Lipp, Moritz and Schwarz, Michael and Gruss, Daniel and
+%                Prescher, Thomas and Haas, Werner and Horn, Jann and
+%                Mangard, Stefan and Kocher, Paul and Genkin, Daniel and
+%                Yarom, Yuval and Hamburg, Mike},
+%   title     = {{Meltdown: Reading Kernel Memory from User Space}},
+%   booktitle = {27th USENIX Security Symposium},
+%   year      = {2018},
+%   pages     = {973--990},
+%   publisher = {USENIX Association}
+% }
+%
+% @inproceedings{kocher2019spectre,
+%   author    = {Kocher, Paul and Horn, Jann and Fogh, Anders and Genkin, Daniel and
+%                Gruss, Daniel and Haas, Werner and Hamburg, Mike and Lipp, Moritz and
+%                Mangard, Stefan and Prescher, Thomas and Schwarz, Michael and
+%                Yarom, Yuval},
+%   title     = {{Spectre Attacks: Exploiting Speculative Execution}},
+%   booktitle = {40th IEEE Symposium on Security and Privacy},
+%   year      = {2019},
+%   pages     = {1--19},
+%   publisher = {IEEE}
+% }
+%
+% @inproceedings{gruss2016flushflush,
+%   author    = {Gruss, Daniel and Maurice, Cl{\'e}mentine and
+%                Fogh, Anders and Mangard, Stefan},
+%   title     = {{Flush+Flush: A Fast and Stealthy Cache Attack}},
+%   booktitle = {Detection of Intrusions and Malware, and Vulnerability
+%                Assessment (DIMVA)},
+%   year      = {2016},
+%   pages     = {279--299},
+%   publisher = {Springer}
+% }
+%
+% @techreport{intel2018analysis,
+%   author      = {{Intel Corporation}},
+%   title       = {{Analysis of Speculative Execution Side Channels}},
+%   institution = {Intel Corporation},
+%   year        = {2018},
+%   note        = {White Paper, Revision~4.0}
+% }
+%
+% @techreport{arm2018cache,
+%   author      = {{ARM Limited}},
+%   title       = {{Cache Speculation Side-channels}},
+%   institution = {ARM Limited},
+%   year        = {2018},
+%   note        = {Whitepaper, Version~2.4}
+% }
+%
+% @techreport{riscv2022zicbom,
+%   author      = {{RISC-V International}},
+%   title       = {{RISC-V Cache Management Operation ISA Extensions (Zicbom)}},
+%   institution = {RISC-V International},
+%   year        = {2022},
+%   note        = {Version~1.0}
+% }
+%
+% @techreport{hauser2010testfloat,
+%   author      = {Hauser, John R.},
+%   title       = {{TestFloat: Floating-Point Verification}},
+%   institution = {UC Berkeley},
+%   year        = {2010},
+%   note        = {\url{http://www.jhauser.us/arithmetic/TestFloat.html}}
+% }
+% ============================================================

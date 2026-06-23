@@ -1,0 +1,40 @@
+\begin{table}[H]
+\caption{HW Interfaces of Module InstrDec0}
+\label{tab:asDecPer02}
+\centering
+\begin{tabularx}{\textwidth}{|l |l |X|}
+  \hline
+   & Module internal name & Chip level name \\
+  \hline
+  \hline
+  Supply &  &  \\
+  \hline
+  Clock & - & - \\
+  \hline
+  Bus & - & - \\
+  \hline
+  Interrupt & - & - \\
+  \hline
+  DMA & - & - \\
+  \hline
+  External Signals & - & - \\
+  \hline
+  Others & opcode\_i(6:0) & iBusDataRd\_s(6:0) \\
+         & func3\_i(2:0) & iBusDataRd\_s(14:12) \\
+         & func7b5\_i & iBusDataRd\_s(30) \\
+         & zero\_i & zero\_s \\
+         & resultSrc\_o(1:0) & resultSrc\_s(1:0) \\
+         & dMemWr\_o & dMemWr\_s \\
+         & dMemRd\_o & dMemRd\_s \\
+         & PCSrc\_o & PCSrc\_s (not for pipeline) \\
+         & aluSrcB\_o & aluSrcB\_s \\
+         & aluSrcA\_o & aluSrcA\_s \\
+         & regWr\_o & regWr\_s \\
+         & jump\_o & jump\_s \\
+         & immSrc\_o(2:0) & immSrc\_s(2:0) \\
+         & aluSel\_o(4:0) & aluSel\_s(4:0) \\
+         & branch\_s\_o & only for pipeline \\
+         & jumo\_s\_o & only for pipeline \\
+  \hline
+\end{tabularx}
+\end{table}

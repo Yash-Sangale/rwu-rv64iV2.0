@@ -1,0 +1,46 @@
+\begin{table}[H]
+\caption{Register List of Module QSPI0}
+\label{tab:asQspiPer03}
+\centering
+\begin{tabularx}{\textwidth}{|l |l |l |X|}
+  \hline
+  offset & Register Name(s) & Name used in module & Comment \\
+  &in Chip & register description &  \\
+  \hline
+  \hline
+  0x00 & \asqspiIDRegExt & \asqspiIDRegInt & ID of QSPI0 peripheral \\
+  \hline
+  0x08 & \asqspiCtrlRegExt & \asqspiCtrlRegInt & QSPI Control register \\
+  \hline
+  0x10 & \asqspiCmdRegExt & \asqspiCmdRegInt & SPI command opcode \\
+  \hline
+  0x18 & \asqspiAddrRegExt & \asqspiAddrRegInt & QSPI target flash address \\
+  \hline
+  0x20 & \asqspiLenRegExt & \asqspiLenRegInt & QSPI transfer length in bytes \\
+  \hline
+  0x28 & \asqspiDummyRegExt & \asqspiDummyRegInt & QSPI dummy cycles \\
+  \hline
+  0x30 & \asqspiStatusRegExt & \asqspiStatusRegInt & QSPI status flags \\
+  \hline
+  0x38 & \asqspiTxdataRegExt & \asqspiTxdataRegInt & QSPI TX FIFO write \\
+  \hline
+  0x40 & \asqspiRxdataRegExt & \asqspiRxdataRegInt & QSPI RX FIFO read \\
+  \hline
+  0x48 & \asqspiFifostatRegExt & \asqspiFifostatRegInt & QSPI FIFO levels \\
+  \hline
+  0x50 & \asqspiIMSCRegExt & \asqspiIMSCRegInt & QSPI Interrupt Mask Control Register \\
+  \hline
+  0x58 & \asqspiRISRegExt & \asqspiRISRegInt & QSPI Raw Interrupt Status Register \\
+  \hline
+  0x60 & \asqspiISRRegExt & \asqspiISRRegInt & QSPI Interrupt Set Register \\
+  \hline
+  0x68 & \asqspiICRRegExt & \asqspiICRRegInt & QSPI Interrupt Clear Register \\
+  \hline
+  0x70 & \asqspiMISRegExt & \asqspiMISRegInt & QSPI Masked Interrupt Status Register \\
+  \hline
+  0x78 & \asqspiClkdivRegExt & \asqspiClkdivRegInt & QSPI Clock Divider register (Baud Rate) \\
+  \hline
+  0x80 & \asqspiTimeoutRegExt & \asqspiTimeoutRegInt & QSPI Timeout threshold register \\
+  \hline
+\end{tabularx}
+\end{table}

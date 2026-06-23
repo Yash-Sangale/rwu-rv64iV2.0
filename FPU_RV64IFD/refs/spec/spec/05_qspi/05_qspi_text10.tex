@@ -1,0 +1,587 @@
+In the following the registers of a QSPI peripheral are listed and described. Some registers’ layout or availability depends on the generic feature set implemented for that QSPI’s instantiation. Such registers and concerned bit fields are denoted by the use of italic style.
+
+\subsubsection{QSPI Register Overview}
+
+\begin{table}[H]
+\caption{QSPI Register List}
+\label{tab:asQspiPer04}
+\centering
+\begin{tabularx}{\textwidth}{|l |X |l|}
+  \hline
+  Register Group & Register Name & Register Symbol \\
+  \hline
+  \hline
+  System Registers & (Clock Control Register) & (\textbf{CLC}) \\
+  & Identification Register & \textbf{ID} \\
+  \hline
+  Special  & (Run Control Register) & (\textbf{RUN\_CTRL}) \\
+  Function & QSPI Control register & \asqspiCtrlRegExt \\
+  Registers & SPI command opcode & \asqspiCmdRegExt \\
+  & QSPI target flash address  & \asqspiAddrRegExt \\
+  & QSPI transfer length in bytes  & \asqspiLenRegExt \\
+  & QSPI dummy cycles  & \asqspiDummyRegExt \\
+  & QSPI status flags  & \asqspiStatusRegExt \\
+  & QSPI TX FIFO write  & \asqspiTxdataRegExt \\
+  & QSPI RX FIFO read  & \asqspiRxdataRegExt \\
+  & QSPI FIFO levels  & \asqspiFifostatRegExt \\
+  & QSPI Clock divider (Baud Rate)  & \asqspiClkdivRegExt \\
+  & QSPI Timeout  & \asqspiTimeoutRegExt \\
+  \hline
+  Interrupt & Interrupt Mask Control Register & \asqspiIMSCRegExt \\
+  Registers & Raw Interrupt Status Register & \asqspiRISRegExt \\
+  & Interrupt Set Register & \asqspiISRRegExt \\
+  & Interrupt Clear Register & \asqspiICRRegExt \\
+  & Masked Interrupt Status Register & \asqspiMISRegExt \\
+  \hline
+\end{tabularx}
+\end{table}
+
+
+\subsubsection{Read-Write Features}
+\begin{itemize}
+  \item w: writable bit, by SW
+  \item r: readable bit, by SW
+  \item h: bit will be set by HW only
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% System Registers
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{System Registers}
+\paragraph{QSPI\_ID} -:
+Identification register of this peripheral. A write will have no effect, a read will return the fixed ID. The ID will be defined on chip level.
+           
+\asregkopf{ID register (in BPI)}{$000100000000C001_H$}
+\asregfourxsixteen{\multicolumn{16}{|c|}{MOD\_NUMBER}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {1&1&0&0&0&0&0&0&\multicolumn{8}{c|}{REV\_NUMBER}}
+                             {r&r&r&r&r&r&r&r&\multicolumn{8}{c|}{r}}
+
+\asregdesc{MOD\_NUMBER & 63:48 & r & Module Identification Number. \\
+           \hline
+           - & 47:16 & r & Reserved \\
+           \hline
+           - & 15:8 & r & The value C0 indicates the peripheral as 64-bit module.\\
+           \hline
+           REV\_NUMBER & 7:0 & r & Module Revision Number: Bits 7-0 are used for module revision numbering.}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% SFR
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Special Function Registers}
+
+\paragraph{\asqspiCtrlRegExt} -:
+This register controls all transaction parameters of the QSPI interface:
+\begin{itemize}
+  \item Start a transfer:
+    \[ start\_s = (\asqspiCtrlRegExt\textbf{.START} == 1) \land (\asqspiStatusRegExt\textbf{.BUSY} == 0) \]
+    If START is written while BUSY is set, the write is ignored (no error).
+    The START bit is self-clearing; a read always returns 0.
+  \item TX and RX FIFOs can be flushed independently via TX\_FLUSH and RX\_FLUSH.
+    These bits are self-clearing. Flushing is only allowed when BUSY = 0;
+    otherwise the flush is ignored.
+  \item Single (DUAL=0, QUAD=0), Dual (DUAL=1, QUAD=0) or Quad (QUAD=1) SPI data mode.
+  \item 3-Byte or 4-Byte flash address selectable via ADDR\_LEN.
+  \item SPI clock polarity and phase (CPOL, CPHA) selectable. Only Mode\;0
+    (CPOL=0, CPHA=0) and Mode\;3 (CPOL=1, CPHA=1) are supported by the
+    reference flash devices (see Table~\ref{tab:asQspiFlashRef}).
+  \item Double Data Rate (DDR) mode.
+  \item Execute-In-Place (XIP) mode.
+  \item Chip select can be kept asserted between transactions (CS\_HOLD).
+\end{itemize}
+
+\asregkopf{Control register (in BPI)}{$0000000000000002_H$}
+\asregfourxsixteen{\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {0&0&0&RF&TF&AL&CP&CH&DU&CS&XI&DD&QU&ST&0&0}
+                             {r&r&r&w&w&rw&rw&rw&rw&rw&rw&rw&rw&w&r&r}
+%% Bit layout (63..0), only lower 16 shown:
+%%   Bit 13: RF  = RX_FLUSH
+%%   Bit 12: TF  = TX_FLUSH
+%%   Bit 11: AL  = ADDR_LEN
+%%   Bit 10: CP  = CPOL
+%%   Bit  9: CH  = CPHA
+%%   Bit  8: DU  = DUAL
+%%   Bit  7: CS  = CS_HOLD  (was bit 4 before -- renumbered!)
+%%   Bit  6: XI  = XIP
+%%   Bit  5: DD  = DDR
+%%   Bit  4: QU  = QUAD
+%%   Bit  3: START (was bit 0 before -- renumbered!)
+%%   Bits 2..0: reserved
+%% Note: If backwards compatibility is required, keep the original bit
+%%       positions (0..4) and extend upward for the new bits (5..13).
+%%       The layout above keeps the existing lower bits in place:
+\asregdesc{- & 63:14 & r & Reserved \\
+           \hline
+           RX\_FLUSH (RF) & 13 & w  & Flush RX FIFO. Self-clearing. Only effective when BUSY=0. \\
+           \hline
+           TX\_FLUSH (TF) & 12 & w  & Flush TX FIFO. Self-clearing. Only effective when BUSY=0. \\
+           \hline
+           ADDR\_LEN (AL) & 11 & rw & Address length. 0 = 3-Byte (24\;bit), 1 = 4-Byte (32\;bit). \\
+           \hline
+           CPOL (CP)      & 10 & rw & Clock polarity. 0 = idle low (Mode\;0/2), 1 = idle high (Mode\;1/3). \\
+           \hline
+           CPHA (CH)      &  9 & rw & Clock phase. 0 = sample on first edge (Mode\;0/3), 1 = sample on second edge (Mode\;1/2). Note: only combinations CPOL=CPHA=0 and CPOL=CPHA=1 are supported by the reference flash devices. \\
+           \hline
+           DUAL (DU)      &  8 & rw & Enable dual-wire data mode (1-1-2). Effective only when QUAD=0. \\
+           \hline
+           CS\_HOLD (CS)  &  7 & rw & Keep CS asserted between consecutive transactions. \\
+           \hline
+           XIP (XI)       &  6 & rw & Enable execute-in-place mode. See Section~\ref{subsec:qspifunc02} for details. \\
+           \hline
+           DDR (DD)       &  5 & rw & Enable double data rate. \\
+           \hline
+           QUAD (QU)      &  4 & rw & Enable quad-wire data mode (1-1-4 or 1-4-4). Overrides DUAL. \\
+           \hline
+           START (ST)     &  3 & w  & Start transfer. Writing 1 initiates a transaction if BUSY=0. Self-clearing. \\
+           \hline
+           -              & 2:0 & r  & Reserved.}
+
+
+\paragraph{\asqspiCmdRegExt} -:
+The (Q)SPI opcode will be stored.
+\asregkopf{Command register (in BPI)}{$0000000000000000_H$}
+\asregfourxsixteen{\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {0&0&0&0&0&0&0&0&\multicolumn{8}{c|}{OPCODE}}
+                             {r&r&r&r&r&r&r&r&\multicolumn{8}{c|}{rw}}
+\asregdesc{- & 63:8 & r & Reserved \\
+           \hline
+           OPCODE & 7:0 & rw & (Q)SPI opcode}
+
+\paragraph{\asqspiAddrRegExt} -:
+Address register, 4-byte. For target address in a NOR-flash.
+\asregkopf{Address register (in BPI)}{$0000000000000000_H$}
+\asregfourxsixteen{\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {\multicolumn{16}{|c|}{ADDR}}
+                             {\multicolumn{16}{|c|}{rw}}
+                             {\multicolumn{16}{|c|}{ADDR}}
+                             {\multicolumn{16}{|c|}{rw}}
+\asregdesc{- & 63:32 & r & Reserved \\
+           \hline
+           ADDR & 31:0 & rw & Target address in NOR flash}
+
+\paragraph{\asqspiLenRegExt} -:
+Transfer length in bytes.
+\asregkopf{LEN register (in BPI)}{$0000000000000000_H$}
+\asregfourxsixteen{\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {\multicolumn{16}{|c|}{LEN}}
+                             {\multicolumn{16}{|c|}{rw}}
+                             {\multicolumn{16}{|c|}{LEN}}
+                             {\multicolumn{16}{|c|}{rw}}
+\asregdesc{- & 63:32 & r & Reserved \\
+           \hline
+           LEN & 31:0 & rw & Transfer length in bytes.}
+
+\paragraph{\asqspiDummyRegExt} -:
+Register stores the amount of dummy cycles.
+\asregkopf{DUMMY register (in BPI)}{$0000000000000000_H$}
+\asregfourxsixteen{\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {0&0&0&0&0&0&0&0&0&0&\multicolumn{6}{c|}{DUMMY\_CYC}}
+                             {r&r&r&r&r&r&r&r&r&r&\multicolumn{6}{c|}{rw}}
+\asregdesc{- & 63:6 & r & Reserved \\
+           \hline
+           DUMMY\_CYC & 5:0 & rw & Amount of dummy cycles}
+
+\paragraph{\asqspiStatusRegExt} -:
+Status register of the QSPI peripheral.
+\asregkopf{STATUS register (in BPI)}{$0000000000000000_H$}
+\asregfourxsixteen{\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {0&0&0&0&0&0&0&0&0&0&TI&ER&EM&FU&DO&BU}
+                             {r&r&r&r&r&r&r&r&r&r&rh&rh&rh&rh&rh&rh}
+\asregdesc{- & 63:6 & r & Reserved \\
+           \hline
+           TI & 5 & rh & TIMEOUT, timeout occured \\
+          \hline
+           ER & 4 & rh & ERROR, error latched \\
+          \hline
+           EM & 3 & rh & FIFO\_EMPTY, RX-FIFO empty \\
+          \hline
+           FU & 2 & rh & FIFO\_FULL, TX-FIFO full \\
+          \hline
+           DO & 1 & rh & DONE, Transfer completed \\
+           \hline
+           BU & 0 & rh & BUSY, Kernel active}
+
+\paragraph{\asqspiTxdataRegExt} -:
+TX-FIFO write register.
+\asregkopf{TX register (in BPI)}{$0000000000000000_H$}
+\asregfourxsixteen{\multicolumn{16}{|c|}{TX FIFO}}
+                             {\multicolumn{16}{|c|}{rw}}
+                             {\multicolumn{16}{|c|}{TX FIFO}}
+                             {\multicolumn{16}{|c|}{rw}}
+                             {\multicolumn{16}{|c|}{TX FIFO}}
+                             {\multicolumn{16}{|c|}{rw}}
+                             {\multicolumn{16}{|c|}{TX FIFO}}
+                             {\multicolumn{16}{|c|}{rw}}
+\asregdesc{TX & 63:0 & rw & TX FIFO write}
+
+\paragraph{\asqspiRxdataRegExt} -:
+RX-FIFO read register.
+\asregkopf{RX register (in BPI)}{$0000000000000000_H$}
+\asregfourxsixteen{\multicolumn{16}{|c|}{RX FIFO}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {\multicolumn{16}{|c|}{RX FIFO}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {\multicolumn{16}{|c|}{RX FIFO}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {\multicolumn{16}{|c|}{RX FIFO}}
+                             {\multicolumn{16}{|c|}{r}}
+\asregdesc{RX FIFO & 63:0 & r & RX FIFO read}
+
+\paragraph{\asqspiFifostatRegExt} -:
+Displays the status of the FIFO.
+\asregkopf{FIFO status register (in BPI)}{$0000000000000000_H$}
+\asregfourxsixteen{\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {\multicolumn{8}{|c|}{RX\_LEV}&\multicolumn{8}{c|}{TX\_LEV}}
+                             {\multicolumn{8}{|c|}{rh}&\multicolumn{8}{c|}{rh}}
+\asregdesc{- & 63:16 & r & Reserved \\
+           \hline
+           RX\_LEV & 15:8 & rh & RX FIFO level \\
+           \hline
+           TX\_LEV & 7:0 & rh & TX FIFO level}
+
+\paragraph{\asqspiClkdivRegExt} -:
+The Clock Divider Register controls the frequency of the generated SCK clock.
+The SCK frequency is derived from the kernel clock as:
+\[
+  f_{SCK} = \frac{f_{kernel}}{2 \times (\text{CLKDIV} + 1)}
+\]
+With $f_{kernel} = 125\;\text{MHz}$ this yields the following example values:
+
+\begin{table}[H]
+\caption{CLKDIV Examples ($f_{kernel}=125\;\text{MHz}$)}
+\label{tab:asQspiClkdivEx}
+\centering
+\begin{tabularx}{\textwidth}{|l |l |X|}
+  \hline
+  CLKDIV & $f_{SCK}$ & Comment \\
+  \hline
+  \hline
+  0x00 & 62.5\;MHz & Maximum SCK (check flash device spec) \\
+  \hline
+  0x01 & 31.25\;MHz & \\
+  \hline
+  0x03 & 15.625\;MHz & Suitable for slow read without dummy cycles \\
+  \hline
+  0xFF & 244.1\;kHz  & Minimum SCK \\
+  \hline
+\end{tabularx}
+\end{table}
+
+The register must not be changed while a transfer is active (BUSY=1).
+\asregkopf{Clock Divider register (in BPI)}{$0000000000000003_H$}
+\asregfourxsixteen{\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {\multicolumn{8}{|c|}{0}&\multicolumn{8}{c|}{CLKDIV}}
+                             {\multicolumn{8}{|c|}{r}&\multicolumn{8}{c|}{rw}}
+\asregdesc{- & 63:8 & r & Reserved \\
+           \hline
+           CLKDIV & 7:0 & rw & Clock divider value. Reset value 0x03 gives $f_{SCK} \approx 15.6\;\text{MHz}$ as a safe default for most NOR-Flash devices without dummy cycles.}
+
+\paragraph{\asqspiTimeoutRegExt} -:
+The Timeout Register defines the maximum number of kernel clock cycles that the
+FSM may remain in any non-IDLE state before a TIMEOUT error is raised.
+If the counter reaches zero while the kernel is active (BUSY=1), the FSM
+is forced back to IDLE, the CS line is deasserted, and the TIMEOUT bit is set
+in the STATUS and RIS registers.
+
+Setting TIMEOUT\_THR to 0x00000000 disables the timeout mechanism.
+
+A typical value for a 125\;MHz kernel clock and a maximum allowed transaction time
+of 1\;ms is: $\text{TIMEOUT\_THR} = 125\,000 = \texttt{0x0001E848}$.
+
+\asregkopf{Timeout register (in BPI)}{$0000000000000000_H$}
+\asregfourxsixteen{\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {\multicolumn{16}{|c|}{TIMEOUT\_THR[31:16]}}
+                             {\multicolumn{16}{|c|}{rw}}
+                             {\multicolumn{16}{|c|}{TIMEOUT\_THR[15:0]}}
+                             {\multicolumn{16}{|c|}{rw}}
+\asregdesc{- & 63:32 & r & Reserved \\
+           \hline
+           TIMEOUT\_THR & 31:0 & rw & Timeout threshold in kernel clock cycles.
+                                      0x00000000 = timeout disabled.}
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% IRQ
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Interrupt Registers}
+Interrupt sources are level-based and derived directly from kernel status.
+
+\paragraph{Flow of Interrupt Requests} -:
+Figure \ref{fig:asqspi03} shows the flow of a single interrupt request, which comes from the Peripheral Kernel or from the FIFO Controller.
+\begin{figure}[H] 
+\centering
+\begin{tikzpicture}
+% ICR
+\filldraw[fill=white, draw=black] (0,0) rectangle (1,1);
+\node[align=left] at (0.3,1.25) {ICR};
+% ISR
+\filldraw[fill=white, draw=black] (0,2) rectangle (1,3);
+\node[align=left] at (0.3,3.25) {ISR};
+% IRQ
+\node[align=left] at (0.3,5.25) {IRQ source};
+% Mux
+\draw (3,1.5) -- (3,3.5);
+\draw (4,2) -- (4,3);
+\draw (3,3.5) -- (4,3);
+\draw (3,1.5) -- (4,2);
+% Lines to mux
+\draw (1,0.5) -- (2,0.5); \draw (2,0.5) -- (2,2); \draw[->] (2,2) -- (3, 2);
+\draw[->] (1,2.5) -- (3, 2.5);
+\draw (1,4.5) -- (2,4.5); \draw (2,4.5) -- (2,3); \draw[->] (2,3) -- (3, 3);
+% RIS
+\filldraw[fill=white, draw=black] (5,2) rectangle (6,3);
+\node[align=left] at (5.3,3.25) {RIS};
+% Line to RIS
+\draw[->] (4,2.5) -- (5, 2.5);
+% IMSC
+\filldraw[fill=white, draw=black] (5,6) rectangle (6,7);
+\node[align=left] at (5.3,7.25) {IMSC};
+% Line to AND
+\draw (6,2.5) -- (6.5,2.5); \draw (6.5,2.5) -- (6.5,4.25); \draw[->] (6.5,4.25) -- (7, 4.25);
+\draw (6,6.5) -- (6.5,6.5); \draw (6.5,6.5) -- (6.5,4.75); \draw[->] (6.5,4.75) -- (7, 4.75);
+% AND
+\filldraw[fill=white, draw=black] (7,4) rectangle (8,5);
+\node[align=left] at (7.5,4.5) {\&};
+% Line to out and out
+\draw[->] (8,4.5) -- (11,4.5); \node at (11,4.75) {IRQ to CPU};
+% Line to MIS
+\draw[fill=black, draw=black] (8.5,4.5) circle (0.1);
+\draw (8.5,4.5) -- (8.5,6.5); \draw[->] (8.5,6.5) -- (9, 6.5); 
+% MIS
+\filldraw[fill=white, draw=black] (9,6) rectangle (10,7);
+\node[align=left] at (9.3,7.25) {MIS};
+\end{tikzpicture}
+\caption{Interrupt Request Flow}
+\label{fig:asqspi03}
+\end{figure}
+A pulse on an interrupt request <xyz>\_IRQ sets the corresponding interrupt status bit in
+the Raw Interrupt Status Register RIS. The interrupt status bits can be set with the
+Interrupt Set Register ISR or can be cleared with the Interrupt Clear Register ICR.
+
+The Interrupt Mask Control Register IMSC enables or disables the level sensitive
+interrupts to the ICU. The Masked Interrupt Status Register MIS gives the current
+masked status value of the corresponding interrupt.
+
+If an IMSC bit is disabled while its interrupt is active, then the interrupt for the ICU will be
+removed, but only until this IMSC bit is enabled again, unless the interrupt has been
+cleared in the mean time.
+
+If the IMSC bit is not enabled when an interrupt source becomes active, then the interrupt
+bit will only be set in the RIS register. If the corresponding IMSC bit is later enabled, the
+interrupt will consequently become active in the MIS register.
+
+Before enabling an interrupt in the MIS bit, it is good practice to always first clear the
+corresponding interrupt in the RIS via ICR.
+
+In QSPI: \[ MIS = RIS \& IMSC \] and then the external interrupt output is: \[ IRQ =|  MIS \]
+
+\paragraph{\asqspiRISRegExt} -:
+The Raw Interrupt Status Register (RIS) is read-only. It reflects the unmasked
+current interrupt status. Writing has no effect.
+\begin{itemize}
+  \item 0 -- No Interrupt pending
+  \item 1 -- Interrupt pending
+\end{itemize}
+\asregkopf{Raw Interrupt Status Register (in BPI)}{$0000000000000000_H$}
+\asregfourxsixteen{\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {0&0&0&0&0&0&0&0&0&TI&ER&TE&TH&EM&HA&DO}
+                             {r&r&r&r&r&r&r&r&r&rh&rh&rh&rh&rh&rh&rh}
+\asregdesc{- & 63:7 & r & Reserved \\
+           \hline
+           TI & 6 & rh & TIMEOUT, Timeout threshold reached \\
+           \hline
+           ER & 5 & rh & ERROR, Error latched \\
+           \hline
+           TE & 4 & rh & TX\_EMPTY, TX FIFO empty \\
+           \hline
+           TH & 3 & rh & TX\_HALF, TX FIFO $\leq$ half full \\
+           \hline
+           EM & 2 & rh & RX\_EMPTY, RX FIFO empty \\
+           \hline
+           HA & 1 & rh & RX\_HALF, RX FIFO $\geq$ half full \\
+           \hline
+           DO & 0 & rh & DONE, Transfer completed}
+
+\paragraph{\asqspiIMSCRegExt} -:
+The Interrupt Mask Control Register (IMSC) enables or disables individual interrupt
+sources. Write~1 to unmask (enable); write~0 to mask (disable).
+\begin{itemize}
+  \item 0 -- Interrupt disabled (masked)
+  \item 1 -- Interrupt enabled (unmasked)
+\end{itemize}
+\asregkopf{Interrupt Mask Control Register (in BPI)}{$0000000000000000_H$}
+\asregfourxsixteen{\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {0&0&0&0&0&0&0&0&0&TI&ER&TE&TH&EM&HA&DO}
+                             {r&r&r&r&r&r&r&r&r&rw&rw&rw&rw&rw&rw&rw}
+\asregdesc{- & 63:7 & r & Reserved \\
+           \hline
+           TI & 6 & rw & TIMEOUT \\
+           \hline
+           ER & 5 & rw & ERROR \\
+           \hline
+           TE & 4 & rw & TX\_EMPTY \\
+           \hline
+           TH & 3 & rw & TX\_HALF \\
+           \hline
+           EM & 2 & rw & RX\_EMPTY \\
+           \hline
+           HA & 1 & rw & RX\_HALF \\
+           \hline
+           DO & 0 & rw & DONE}
+
+\paragraph{\asqspiMISRegExt} -:
+The Masked Interrupt Status Register (MIS) is read-only. It returns the logical
+AND of RIS and IMSC, i.e.\ the effective interrupt status visible to the CPU.
+\begin{itemize}
+  \item 0 -- No Interrupt pending
+  \item 1 -- Interrupt pending
+\end{itemize}
+\asregkopf{Masked Interrupt Status Register (in BPI)}{$0000000000000000_H$}
+\asregfourxsixteen{\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {0&0&0&0&0&0&0&0&0&TI&ER&TE&TH&EM&HA&DO}
+                             {r&r&r&r&r&r&r&r&r&rh&rh&rh&rh&rh&rh&rh}
+\asregdesc{- & 63:7 & r & Reserved \\
+           \hline
+           TI & 6 & rh & TIMEOUT \\
+           \hline
+           ER & 5 & rh & ERROR \\
+           \hline
+           TE & 4 & rh & TX\_EMPTY \\
+           \hline
+           TH & 3 & rh & TX\_HALF \\
+           \hline
+           EM & 2 & rh & RX\_EMPTY \\
+           \hline
+           HA & 1 & rh & RX\_HALF \\
+           \hline
+           DO & 0 & rh & DONE}
+
+\paragraph{\asqspiICRRegExt} -:
+The Interrupt Clear Register (ICR) is write-only. Writing~1 to a bit clears
+the corresponding interrupt in both RIS and MIS. Writing~0 has no effect.
+Reading returns~0.
+
+Note: If a data transfer is handled via interrupt requests (this chip has no DMA),
+the interrupt should be cleared via ICR only \emph{after} the FIFO has been drained
+or refilled, to avoid losing the interrupt if the condition is still active.
+\begin{itemize}
+  \item 0 -- No change
+  \item 1 -- Clear Interrupt
+\end{itemize}
+\asregkopf{Interrupt Clear Register (in BPI)}{$0000000000000000_H$}
+\asregfourxsixteen{\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {0&0&0&0&0&0&0&0&0&TI&ER&TE&TH&EM&HA&DO}
+                             {r&r&r&r&r&r&r&r&r&w&w&w&w&w&w&w}
+\asregdesc{- & 63:7 & r & Reserved \\
+           \hline
+           TI & 6 & w & TIMEOUT \\
+           \hline
+           ER & 5 & w & ERROR \\
+           \hline
+           TE & 4 & w & TX\_EMPTY \\
+           \hline
+           TH & 3 & w & TX\_HALF \\
+           \hline
+           EM & 2 & w & RX\_EMPTY \\
+           \hline
+           HA & 1 & w & RX\_HALF \\
+           \hline
+           DO & 0 & w & DONE}
+
+\paragraph{\asqspiISRRegExt} -:
+The Interrupt Set Register (ISR) is write-only and is provided for software
+testing of the interrupt path. Writing~1 forces the corresponding RIS bit to~1
+(and consequently MIS if IMSC is set). Writing~0 has no effect. Reading returns~0.
+\begin{itemize}
+  \item 0 -- No change
+  \item 1 -- Force Interrupt (test only)
+\end{itemize}
+\asregkopf{Interrupt Set Register (in BPI)}{$0000000000000000_H$}
+\asregfourxsixteen{\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {\multicolumn{16}{|c|}{0}}
+                             {\multicolumn{16}{|c|}{r}}
+                             {0&0&0&0&0&0&0&0&0&TI&ER&TE&TH&EM&HA&DO}
+                             {r&r&r&r&r&r&r&r&r&w&w&w&w&w&w&w}
+\asregdesc{- & 63:7 & r & Reserved \\
+           \hline
+           TI & 6 & w & TIMEOUT \\
+           \hline
+           ER & 5 & w & ERROR \\
+           \hline
+           TE & 4 & w & TX\_EMPTY \\
+           \hline
+           TH & 3 & w & TX\_HALF \\
+           \hline
+           EM & 2 & w & RX\_EMPTY \\
+           \hline
+           HA & 1 & w & RX\_HALF \\
+           \hline
+           DO & 0 & w & DONE}

@@ -1,0 +1,186 @@
+\chapter{Toolchain}
+\label{chap:toolchain}
+
+\begin{table}[H]
+\caption{History / Revision – Chapter 5}
+\label{tab:history-ch1}
+\centering
+\begin{tabular}{llll}
+\toprule
+Version & Date & Author & Remarks \\
+\midrule
+1.0 & January 22, 2026 & Y. Sangale & Initial template draft \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Introduction of the Toolchain}
+
+
+The development of a modern System-on-Chip (SoC) requires a robust, automated, and developer-friendly toolchain that seamlessly integrates hardware design, firmware development, simulation, testing, and documentation.  
+For the \textbf{RV64I\_RWU} project, a comprehensive toolchain was designed and extended to support the full development lifecycle of a 64-bit RISC-V processor core.
+
+The toolchain is centered around a \textbf{modular CMake-based build system} and is complemented by a custom-developed \textbf{Visual Studio Code (VS Code) extension}.  
+This combination enables both command-line–driven workflows for automation and graphical workflows for developer productivity. The primary goals of the toolchain are:
+
+\begin{itemize}
+    \item Reproducible and cross-platform builds
+    \item Automated firmware compilation and hardware simulation
+    \item Scalable regression testing using CTest
+    \item Reduced onboarding effort for new developers
+    \item Tight integration between software, hardware, and verification flows
+\end{itemize}
+
+By abstracting complex build and simulation commands behind well-defined interfaces, the toolchain significantly improves usability while maintaining full transparency and flexibility for advanced users.
+
+\section{Technologies Used}
+
+The toolchain is built using industry-standard tools and technologies to ensure portability, maintainability, and long-term scalability.
+
+\subsection{Build and Automation Technologies}
+
+\begin{itemize}
+    \item \textbf{CMake ($\geq$ 3.20)}:  
+    Used as the primary build system generator. A modular CMake architecture enables auto-discovery of RTL, firmware, and test files while maintaining a clean separation of concerns.
+    
+    \item \textbf{CTest}:  
+    Integrated with CMake to provide automated unit, integration, firmware, and IP-level regression testing with support for parallel execution.
+    
+    \item \textbf{RISC-V GNU Toolchain}:  
+    The \texttt{riscv64-unknown-elf-gcc} compiler is used for compiling firmware written in assembly and C for the RV64I architecture.
+\end{itemize}
+
+\subsection{Simulation and Verification Tools}
+
+\begin{itemize}
+    \item \textbf{Xilinx Vivado XSIM}:  
+    Used for RTL simulation, supporting both console-based execution for automation and GUI-based execution with waveform visualization.
+    
+    \item \textbf{TCL Scripts}:  
+    Employed to standardize waveform setup, simulation control, and batch execution in XSIM.
+\end{itemize}
+
+\subsection{Development and Integration Tools}
+
+\begin{itemize}
+    \item \textbf{Visual Studio Code}:  
+    Serves as the primary development environment.
+    
+    \item \textbf{Node.js}:  
+    Used to develop a custom VS Code extension that provides an integrated user interface for the toolchain.
+    
+    \item \textbf{Git}:  
+    Used for version control and collaborative development.
+    
+    \item \textbf{Sphinx}:  
+    Used for generating HTML and PDF documentation directly from the project source.
+\end{itemize}
+
+\section{Usage of the Toolchain}
+
+The RV64I toolchain supports two primary usage modes: a terminal-based workflow and an IDE-based workflow using the VS Code extension.
+
+\subsection{Terminal-Based Usage}
+
+The terminal workflow provides full control over the build and simulation process and is well suited for automation, scripting, and continuous integration environments.
+
+\subsubsection{Configuration and Build}
+
+\begin{verbatim}
+cmake -S . -B build -G "MinGW Makefiles"
+cmake --build build
+\end{verbatim}
+
+This step configures the project, detects available tools, and builds all auto-discovered targets.
+
+\subsubsection{Firmware Compilation}
+
+\begin{verbatim}
+cmake --build build --target fw_asm_instr06addi
+\end{verbatim}
+
+Firmware targets are generated automatically based on the source files present in the firmware directory.
+
+\subsubsection{Simulation Execution}
+
+\textbf{Console Mode:}
+\begin{verbatim}
+xsim instr06addi_snapshot -runall
+\end{verbatim}
+
+\textbf{GUI Mode with Waveforms:}
+\begin{verbatim}
+xsim instr06addi_snapshot --gui --tclbatch sim/config/xsim_cfg2.tcl
+\end{verbatim}
+
+\subsubsection{Regression Testing}
+
+\begin{verbatim}
+ctest --test-dir build -j
+\end{verbatim}
+
+CTest enables parallel execution of unit, integration, firmware, and IP-level tests.
+
+\subsection{VS Code Extension Usage}
+
+To improve usability and reduce the cognitive load of complex command sequences, a custom VS Code extension named \textbf{rwu-rv64i-toolchain} was developed.
+
+\subsubsection{Setup Wizard}
+
+The extension provides an interactive setup wizard that:
+\begin{itemize}
+    \item Detects installed tools (CMake, RISC-V GCC, XSIM, Git)
+    \item Reports missing components
+    \item Allows manual configuration of executable paths
+\end{itemize}
+
+This significantly simplifies first-time setup, especially on Windows systems.
+
+\subsubsection{Build and Simulation Commands}
+
+The extension exposes high-level commands via the Command Palette, including:
+\begin{itemize}
+    \item Configure and Build All
+    \item Build Specific Target (compile only)
+    \item Run Simulation (console mode)
+    \item Run Simulation (GUI with waveforms)
+\end{itemize}
+
+Target names are automatically inferred from the currently opened file, reducing manual input errors.
+
+\subsubsection{Regression Testing Support}
+
+The extension integrates CTest commands, enabling:
+\begin{itemize}
+    \item Execution of specific tests
+    \item Full library regression testing
+    \item Parallel test execution
+\end{itemize}
+
+All test results are displayed directly in the VS Code terminal for immediate feedback.
+
+\section{Further Development of the Toolchain}
+
+While the current toolchain is fully functional, several extensions and improvements are planned.
+
+\subsection{CMake Enhancements}
+
+Future improvements to the CMake-based build system include:
+\begin{itemize}
+    \item Support for multiple simulators beyond XSIM
+    \item Improved dependency visualization and reporting
+    \item Enhanced cross-compilation support for additional RISC-V variants
+    \item Integration with continuous integration (CI) pipelines
+\end{itemize}
+
+\subsection{VS Code Extension Enhancements}
+
+Planned enhancements to the VS Code extension include:
+\begin{itemize}
+    \item Graphical dashboards for build and test status
+    \item Integrated waveform viewers
+    \item Per-target configuration profiles
+    \item Deeper integration with documentation and architecture diagrams
+\end{itemize}
+
+These improvements aim to further reduce development time and improve the overall developer experience.

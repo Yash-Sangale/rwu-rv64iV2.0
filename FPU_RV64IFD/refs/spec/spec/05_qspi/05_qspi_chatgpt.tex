@@ -1,0 +1,201 @@
+\section{QSPI Controller Specification}
+
+\subsection{Overview}
+
+The QSPI controller is a memory-mapped peripheral providing high-speed
+SPI and Quad-SPI access to external flash devices.
+It supports:
+
+\begin{itemize}
+  \item Single, Dual, and Quad SPI modes
+  \item Configurable dummy cycles
+  \item Programmable baud rate
+  \item TX and RX FIFOs
+  \item Interrupt generation
+  \item Optional Execute-In-Place (XIP)
+\end{itemize}
+
+The controller is accessed via a 64-bit Wishbone slave interface.
+
+\subsection{Block Architecture}
+
+\begin{verbatim}
+Wishbone
+   |
+Register File + IRQ Logic (SRB)
+   |
+QSPI Kernel FSM
+   |
+TX FIFO / RX FIFO
+   |
+SPI PHY (SCK / CS / IO[3:0])
+\end{verbatim}
+
+The kernel is fully state-driven and does not depend on external events
+such as interrupts or bus timing.
+
+\subsection{Register Map}
+
+All registers are 64-bit wide and aligned on 8-byte boundaries.
+
+\begin{center}
+\begin{tabular}{|c|l|l|}
+\hline
+Offset & Name        & Description \\
+\hline
+0x00 & QSPI\_ID      & Peripheral identification \\
+0x08 & QSPI\_CTRL    & Control register \\
+0x10 & QSPI\_CMD     & SPI command opcode \\
+0x18 & QSPI\_ADDR    & Target flash address \\
+0x20 & QSPI\_LEN     & Transfer length in bytes \\
+0x28 & QSPI\_DUMMY   & Dummy cycles \\
+0x30 & QSPI\_STATUS  & Status flags \\
+0x38 & QSPI\_TXDATA  & TX FIFO write \\
+0x40 & QSPI\_RXDATA  & RX FIFO read \\
+0x48 & QSPI\_FIFOSTAT& FIFO levels \\
+0x50 & QSPI\_IMSC    & Interrupt mask \\
+0x58 & QSPI\_RIS     & Raw interrupt status \\
+0x60 & QSPI\_ISC     & Interrupt clear \\
+0x68 & QSPI\_MIS     & Masked interrupt status \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Control Register (QSPI\_CTRL)}
+
+\begin{center}
+\begin{tabular}{|c|l|l|}
+\hline
+Bit & Name & Function \\
+\hline
+0 & START & Start transfer \\
+1 & QUAD  & Enable quad mode \\
+2 & DDR   & Enable double data rate \\
+3 & XIP   & Enable execute-in-place \\
+4 & CS\_HOLD & Keep CS asserted \\
+63:5 & - & Reserved \\
+\hline
+\end{tabular}
+\end{center}
+
+Writing bit 0 initiates a transaction if not busy.
+
+\subsection{Status Register (QSPI\_STATUS)}
+
+\begin{center}
+\begin{tabular}{|c|l|l|}
+\hline
+Bit & Name & Meaning \\
+\hline
+0 & BUSY & Kernel active \\
+1 & DONE & Transfer completed \\
+2 & FIFO\_FULL & TX FIFO full \\
+3 & FIFO\_EMPTY & RX FIFO empty \\
+4 & ERROR & Error latched \\
+5 & TIMEOUT & Timeout occurred \\
+63:6 & - & Reserved \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{FIFO Status Register (QSPI\_FIFOSTAT)}
+
+\begin{center}
+\begin{tabular}{|c|l|}
+\hline
+Bits & Description \\
+\hline
+7:0 & TX FIFO level \\
+15:8 & RX FIFO level \\
+63:16 & Reserved \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Interrupt Model}
+
+Interrupt sources are level-based and derived directly from kernel status.
+
+\subsubsection{Raw Interrupt Status (QSPI\_RIS)}
+
+\begin{center}
+\begin{tabular}{|c|l|l|}
+\hline
+Bit & Source & Description \\
+\hline
+0 & DONE & Transfer completed \\
+1 & RX\_HALF & RX FIFO >= half full \\
+2 & RX\_EMPTY & RX FIFO empty \\
+3 & ERROR & Error latched \\
+4 & TIMEOUT & Timeout \\
+63:5 & - & Reserved \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsubsection{Interrupt Mask (QSPI\_IMSC)}
+
+Each bit masks the corresponding RIS bit.
+
+\subsubsection{Masked Interrupt Status (QSPI\_MIS)}
+
+\[
+MIS = RIS \land IMSC
+\]
+
+The external interrupt output is:
+
+\[
+IRQ = \bigvee MIS
+\]
+
+\subsubsection{Interrupt Clear (QSPI\_ISC)}
+
+Writing a 1 clears the corresponding RIS bit.
+
+\subsection{Kernel State Machine}
+
+The kernel operates in the following states:
+
+\begin{itemize}
+  \item IDLE
+  \item CMD\_PHASE
+  \item ADDR\_PHASE
+  \item DUMMY\_PHASE
+  \item DATA\_PHASE
+  \item DONE
+\end{itemize}
+
+State transitions occur only on the internal kernel clock.
+
+\subsection{Start Semantics}
+
+A transaction is started by:
+
+\[
+start\_s = (QSPI\_CTRL.START == 1) \land (BUSY == 0)
+\]
+
+The START bit is self-clearing.
+
+\subsection{Error Conditions}
+
+Errors are latched in QSPI\_STATUS.ERROR and QSPI\_RIS.ERROR:
+
+\begin{itemize}
+  \item Illegal command
+  \item FIFO overflow/underflow
+  \item XIP conflict
+  \item Timeout
+\end{itemize}
+
+Errors persist until cleared via QSPI\_ISC.
+
+\subsection{Design Rules}
+
+\begin{itemize}
+  \item The kernel FSM is fully state-driven.
+  \item No FSM state depends on interrupt signals.
+  \item Interrupts never control hardware behavior.
+  \item All external behavior is driven by register state only.
+\end{itemize}
